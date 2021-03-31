@@ -1,10 +1,14 @@
 package com.mcm.nativetest;
 
-import CameraCalibration.CameraCalibrationActivity;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
+import android.os.Bundle;
 import android.util.Log;
 import android.view.SurfaceView;
 import android.view.View;
@@ -12,24 +16,30 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
-import android.os.Bundle;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import aruco.CameraParameters;
+import cameracalibration.CameraCalibrationActivity;
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
-import org.opencv.core.Scalar;
 
-public class MainActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2 {
+import java.io.BufferedOutputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+
+public class MainActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2, SensorEventListener {
 
     // Used to load the 'native-lib' library on application startup.
     static {
         System.loadLibrary("native-lib");
     }
+
     protected static final String TAG = "MainActivity";
 
     CameraBridgeViewBase mOpenCvCameraView;
@@ -42,7 +52,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             if (status == LoaderCallbackInterface.SUCCESS) {
                 Log.i(TAG, "OpenCV loaded successfully");
                 mOpenCvCameraView.enableView();
-                mOpenCvCameraView.enableFpsMeter();
+//                mOpenCvCameraView.enableFpsMeter();
 //                mOpenCvCameraView.setOnTouchListener(MainActivity.this);
             } else {
                 super.onManagerConnected(status);
@@ -53,9 +63,10 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     // Vision process thread stuff
     private VisionProcessThread visionProcess;
     private Thread processThread;
-
     private Mat mRgba;
-    private Scalar DRAW_COLOR;
+
+    SensorManager manager;
+    Sensor accelerometer, gyro;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,6 +80,10 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         mOpenCvCameraView.setMaxFrameSize(1280, 960);
         mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
         mOpenCvCameraView.setCvCameraViewListener(this);
+
+        manager = (SensorManager) getSystemService(SENSOR_SERVICE);
+        accelerometer = manager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        gyro = manager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
     }
 
     @Override
@@ -76,8 +91,13 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         super.onPause();
         if (mOpenCvCameraView != null)
             mOpenCvCameraView.disableView();
-        if(processThread != null) processThread.interrupt();
+        if(processThread != null) {
+            visionProcess.exit = true;
+            processThread.interrupt();
+        }
         processThread = null;
+
+        manager.unregisterListener(this);
     }
 
     @Override
@@ -116,18 +136,22 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             if (!cameraParameters.isValid()) {
                 calibrate(findViewById(R.id.content));
             }
+            if(visionProcess == null) visionProcess = new VisionProcessThread(cameraParameters);
+            visionProcess.exit = false;
             if (processThread != null) {
                 processThread.interrupt();
+                processThread = null;
             }
-            if(visionProcess == null) visionProcess = new VisionProcessThread(cameraParameters);
             processThread = new Thread(visionProcess);
             processThread.start();
         }
+
+        manager.registerListener(this, gyro, SensorManager.SENSOR_DELAY_GAME);
+        manager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_GAME);
     }
 
     public void onCameraViewStarted(int width, int height) {
         mRgba = new Mat(height, width, CvType.CV_8UC4);
-        DRAW_COLOR = new Scalar(255, 0, 0, 255);
     }
 
     public void onCameraViewStopped() {
@@ -138,17 +162,50 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         mRgba = inputFrame.rgba();
         visionProcess.setInput(mRgba);
         visionProcess.getOutput(mRgba);
+
         return mRgba;
     }
-
-    /**
-     * A native method that is implemented by the 'native-lib' native library,
-     * which is packaged with this application.
-     */
-    public native String stringFromJNI();
 
     public void calibrate(View view) {
         Intent i = new Intent(getApplicationContext(), CameraCalibrationActivity.class);
         startActivity(i);
+    }
+
+    public void connectPi(View view) {
+        try {
+            URL host = new URL("http", "raspberrypi.local", "5555");
+            HttpURLConnection c = (HttpURLConnection) host.openConnection();
+
+            c.setDoOutput(true);
+            c.setRequestMethod("PUT");
+
+            OutputStream out = new BufferedOutputStream(c.getOutputStream());
+            out.write("Hello".getBytes(StandardCharsets.UTF_8));
+            out.close(); // Close will flush
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        if(event == null) return;
+        // I have no idea of a better way to do this
+        // since the order in which we get readings doesn't seem to be deterministic
+        if(event.sensor.getType() == Sensor.TYPE_GYROSCOPE) {
+            double x = event.values[0];
+            Log.i("Sensor", "Omega x " + x);
+        }
+        else if(event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
+            // X is forward, y is left
+            double x = event.values[2];
+            double y = event.values[1];
+            Log.i("Sensor", "Ax " + x + " Ay " + y);
+        }
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+        // Ignored
     }
 }

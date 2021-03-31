@@ -1,6 +1,6 @@
-package CameraCalibration.calibration;
+package cameracalibration.calibration;
 
-import CameraCalibration.CameraCalibrationActivity;
+import cameracalibration.CameraCalibrationActivity;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;

@@ -1,6 +1,5 @@
 package aruco;
 
-import android.util.Log;
 import org.opencv.core.*;
 import org.opencv.imgproc.Imgproc;
 
@@ -114,7 +113,7 @@ public class MarkerDetector {
             }
         }// all contours processed, now we have the candidateMarkers
         int nCandidates = candidateMarkers.size();
-        Log.e("Detector: ", "n = " + nCandidates);
+//        Log.e("Detector: ", "n = " + nCandidates);
         // sort the points in anti-clockwise order
         for (int i = 0; i < nCandidates; i++) {
             Marker marker = candidateMarkers.get(i);

@@ -26,7 +26,7 @@
             </intent-filter>
         </activity>
 
-        <activity android:name="CameraCalibration.CameraCalibrationActivity"/>
+        <activity android:name="cameracalibration.CameraCalibrationActivity"/>
     </application>
 
 </manifest>

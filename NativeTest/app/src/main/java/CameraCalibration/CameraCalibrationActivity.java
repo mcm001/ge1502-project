@@ -11,9 +11,9 @@
 // When you've captured necessary amount of pattern corners (usually ~20 are enough),
 // press "Calibrate" button for performing camera calibration.
 
-package CameraCalibration;
+package cameracalibration;
 
-import CameraCalibration.calibration.*;
+import cameracalibration.calibration.*;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.res.Resources;

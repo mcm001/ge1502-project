@@ -22,7 +22,7 @@ public class KalmanFilterLatencyCompensator<S extends Num, I extends Num, O exte
 
   private final List<Map.Entry<Double, ObserverSnapshot>> m_pastObserverSnapshots;
 
-  KalmanFilterLatencyCompensator() {
+  public KalmanFilterLatencyCompensator() {
     m_pastObserverSnapshots = new ArrayList<>();
   }
 
@@ -121,7 +121,7 @@ public class KalmanFilterLatencyCompensator<S extends Num, I extends Num, O exte
       }
 
       observer.predict(snapshot.inputs, key - lastTimestamp);
-      observer.correct(snapshot.inputs, snapshot.localMeasurements);
+      if(snapshot.localMeasurements != null) observer.correct(snapshot.inputs, snapshot.localMeasurements);
 
       if (i == indexOfClosestEntry) {
         // Note that the measurement is at a timestep close but probably not exactly equal to the

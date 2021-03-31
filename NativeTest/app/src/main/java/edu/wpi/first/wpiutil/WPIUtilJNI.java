@@ -50,7 +50,9 @@ public final class WPIUtilJNI {
     libraryLoaded = true;
   }
 
-  public static native long now();
+  public static long now() {
+    return System.nanoTime() * 1000L;
+  }
 
   public static native void addPortForwarder(int port, String remoteHost, int remotePort);
 

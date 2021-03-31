@@ -1,4 +1,4 @@
-package CameraCalibration.calibration;
+package cameracalibration.calibration;
 
 import android.util.Log;
 import org.opencv.calib3d.Calib3d;

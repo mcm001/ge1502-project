@@ -1,8 +1,10 @@
 package aruco;
 
+import edu.wpi.first.wpilibj.geometry.Transform2d;
 import org.opencv.calib3d.Calib3d;
 import org.opencv.core.*;
 import org.opencv.imgproc.Imgproc;
+import org.photonvision.vision.Releasable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,7 +14,7 @@ import java.util.Vector;
  * Marker detected in an image, it must be a four-squared contour with black border and
  * a valid code inside it.
  */
-public class Marker extends MatOfPoint2f implements Comparable<Marker> {
+public class Marker extends MatOfPoint2f implements Comparable<Marker>, Releasable {
 
     private static final long serialVersionUID = 1L;
     protected int id;
@@ -26,6 +28,8 @@ public class Marker extends MatOfPoint2f implements Comparable<Marker> {
     private final Mat Tvec;
 
     private final Vector<Point> points;
+
+    private Transform2d transform;
 
     public Marker(float size, Vector<Point> p) {
         id = -1;
@@ -72,7 +76,7 @@ public class Marker extends MatOfPoint2f implements Comparable<Marker> {
             Imgproc.line(in, points.get(i), points.get((i + 1) % 4), color, lineWidth);
         if (writeId) {
             String cad = "";
-            cad = "id=" + id + " dist=" + ((int)(getDist() * 100.0)) / 100.0;
+            cad = "id=" + id + " dist=" + ((int) (getDist() * 100.0)) / 100.0;
             // determine the centroid
             Point cent = new Point(0, 0);
             for (int i = 0; i < 4; i++) {
@@ -335,5 +339,20 @@ public class Marker extends MatOfPoint2f implements Comparable<Marker> {
 
     public Code getCode() {
         return code;
+    }
+
+    @Override
+    public void release() {
+        Rvec.release();
+        Tvec.release();
+        mat.release();
+    }
+
+    public void setCameraToTarget(Transform2d transform) {
+        this.transform = transform;
+    }
+
+    public Transform2d getCameraToTarget() {
+        return transform;
     }
 }

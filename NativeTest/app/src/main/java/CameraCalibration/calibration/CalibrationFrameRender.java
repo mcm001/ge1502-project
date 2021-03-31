@@ -1,4 +1,4 @@
-package CameraCalibration.calibration;
+package cameracalibration.calibration;
 
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.core.Mat;

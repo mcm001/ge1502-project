@@ -69,40 +69,45 @@ public final class RuntimeLoader<T> {
   public void loadLibrary() throws IOException {
     try {
       // First, try loading path
-      System.loadLibrary(m_libraryName);
-    } catch (UnsatisfiedLinkError ule) {
-      // Then load the hash from the resources
-      String hashName = RuntimeDetector.getHashLibraryResource(m_libraryName);
-      String resname = RuntimeDetector.getLibraryResource(m_libraryName);
-      try (InputStream hashIs = m_loadClass.getResourceAsStream(hashName)) {
-        if (hashIs == null) {
-          throw new IOException(getLoadErrorMessage(ule));
-        }
-        try (Scanner scanner = new Scanner(hashIs, StandardCharsets.UTF_8.name())) {
-          String hash = scanner.nextLine();
-          File jniLibrary = new File(m_extractionRoot, resname + "." + hash);
-          try {
-            // Try to load from an already extracted hash
-            System.load(jniLibrary.getAbsolutePath());
-          } catch (UnsatisfiedLinkError ule2) {
-            // If extraction failed, extract
-            try (InputStream resIs = m_loadClass.getResourceAsStream(resname)) {
-              if (resIs == null) {
-                throw new IOException(getLoadErrorMessage(ule));
-              }
-              jniLibrary.getParentFile().mkdirs();
-              try (OutputStream os = Files.newOutputStream(jniLibrary.toPath())) {
-                byte[] buffer = new byte[0xFFFF]; // 64K copy buffer
-                int readBytes;
-                while ((readBytes = resIs.read(buffer)) != -1) { // NOPMD
-                  os.write(buffer, 0, readBytes);
-                }
-              }
-              System.load(jniLibrary.getAbsolutePath());
-            }
-          }
-        }
+      if(RuntimeDetector.isWindows()) {
+        System.load(Paths.get("build\\intermediates\\cmake\\debug\\obj\\x86_64\\libnative-lib.so").toAbsolutePath().toString());
+      } else {
+        System.loadLibrary(m_libraryName);
       }
+    } catch (UnsatisfiedLinkError ule) {
+      throw ule;
+      // Then load the hash from the resources
+//      String hashName = RuntimeDetector.getHashLibraryResource(m_libraryName);
+//      String resname = RuntimeDetector.getLibraryResource(m_libraryName);
+//      try (InputStream hashIs = m_loadClass.getResourceAsStream(hashName)) {
+//        if (hashIs == null) {
+//          throw new IOException(getLoadErrorMessage(ule));
+//        }
+//        try (Scanner scanner = new Scanner(hashIs, StandardCharsets.UTF_8.name())) {
+//          String hash = scanner.nextLine();
+//          File jniLibrary = new File(m_extractionRoot, resname + "." + hash);
+//          try {
+//            // Try to load from an already extracted hash
+//            System.load(jniLibrary.getAbsolutePath());
+//          } catch (UnsatisfiedLinkError ule2) {
+//            // If extraction failed, extract
+//            try (InputStream resIs = m_loadClass.getResourceAsStream(resname)) {
+//              if (resIs == null) {
+//                throw new IOException(getLoadErrorMessage(ule));
+//              }
+//              jniLibrary.getParentFile().mkdirs();
+//              try (OutputStream os = Files.newOutputStream(jniLibrary.toPath())) {
+//                byte[] buffer = new byte[0xFFFF]; // 64K copy buffer
+//                int readBytes;
+//                while ((readBytes = resIs.read(buffer)) != -1) { // NOPMD
+//                  os.write(buffer, 0, readBytes);
+//                }
+//              }
+//              System.load(jniLibrary.getAbsolutePath());
+//            }
+//          }
+//        }
+//      }
     }
   }
 
