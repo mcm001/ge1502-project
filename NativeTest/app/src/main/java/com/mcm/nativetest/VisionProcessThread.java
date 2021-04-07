@@ -27,8 +27,8 @@ public class VisionProcessThread implements Runnable {
     private final Lock outmatlock = new ReentrantLock(true);
     private final MarkerDetector mDetector;
 
-    private final PoseEstimator estimator = new PoseEstimator();
-    private double ax, ay, omega;
+    public final PoseEstimator estimator = new PoseEstimator();
+    public double ax, ay, omega;
 
     public VisionProcessThread(CameraParameters cp) {
         cameraParameters = cp;
@@ -84,7 +84,7 @@ public class VisionProcessThread implements Runnable {
                 }
                 markerLock.unlock();
 
-                processMarkers(detectedMarkers, inTime / 1000.0);
+                processMarkers(detectedMarkers);
 
                 detectedMarkers.forEach(Marker::release);
             } else {
@@ -97,11 +97,13 @@ public class VisionProcessThread implements Runnable {
         }
     }
 
-    private void processMarkers(List<Marker> m, double detectionTimeSec) {
+    private void processMarkers(List<Marker> m) {
+        // So right now the best we can do is nothing
+        // Love to see it
         double now = System.currentTimeMillis() / 1000.0;
         estimator.update(now, ax, ay, omega);
 
         if(!m.isEmpty())
-            estimator.correct(m, detectionTimeSec);
+            estimator.correct(m);
     }
 }

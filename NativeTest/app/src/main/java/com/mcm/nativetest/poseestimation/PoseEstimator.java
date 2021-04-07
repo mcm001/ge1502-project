@@ -2,13 +2,16 @@ package com.mcm.nativetest.poseestimation;
 
 import android.util.Log;
 import aruco.Marker;
+import edu.wpi.first.wpilibj.estimator.KalmanFilter;
 import edu.wpi.first.wpilibj.geometry.Pose2d;
+import edu.wpi.first.wpilibj.system.LinearSystem;
+import edu.wpi.first.wpiutil.math.Nat;
 import edu.wpi.first.wpiutil.math.VecBuilder;
+import edu.wpi.first.wpiutil.math.numbers.N1;
 import org.photonvision.PhotonUtils;
 import org.photonvision.vision.pipe.impl.SolvePNPPipe;
 
 import java.util.List;
-import java.util.Vector;
 
 public class PoseEstimator {
 
@@ -52,23 +55,45 @@ public class PoseEstimator {
 //    }
 //
 
-    AccelerometerPoseEstimator est = new AccelerometerPoseEstimator(
-            VecBuilder.fill(0.1, 0.1, 1.0, 1.0, 1.0),
-            VecBuilder.fill(0.1, 0.1, 1.0));
+//    AccelerometerPoseEstimator est = new AccelerometerPoseEstimator(
+//            VecBuilder.fill(0.1, 0.1, 1.0, 1.0, 1.0),
+//            VecBuilder.fill(0.1, 0.1, 1.0));
+
+   // Let's just do a median filter on x/y position, because the accelerometer readings kinda suck
+
+   // For heading we'll do a kalman filter
+   // state = [position], xdot = [omega]
+   // xdot = 0x + 1u
+   public KalmanFilter<N1, N1, N1> headingFilter = new KalmanFilter<>(Nat.N1(),
+           Nat.N1(), new LinearSystem<>(VecBuilder.fill(0), VecBuilder.fill(1), VecBuilder.fill(1), VecBuilder.fill(0)),
+          VecBuilder.fill(0.1), VecBuilder.fill(0.1), 0.05);
+
+   double lastUpdateTime = -1;
 
     public void update(double time, double ax, double ay, double omega) {
-        est.updateWithTime(time, ax, ay, omega);
-        Log.i("PoseEst", String.format("State Estimate: %s", est.getEstimatedPosition()));
+        double now = System.currentTimeMillis();
+        double dt = now - lastUpdateTime;
+        if(lastUpdateTime < 0) {
+            lastUpdateTime = System.currentTimeMillis();
+            dt = 50.0;
+        }
+        dt /= 1000.0;
+        lastUpdateTime = now;
+
+        headingFilter.predict(VecBuilder.fill(omega), dt);
+//        Log.i("HeadingEst", String.format("Heading Estimate: %s", headingFilter.getXhat(0)));
     }
 
-    public void correct(Pose2d cameraInField, double timeSeconds) {
-        est.addVisionMeasurement(cameraInField, timeSeconds);
-        Log.i("PoseEst", String.format("Measurement: %s", cameraInField));
+    private void correct(Pose2d cameraInField) {
+//        est.addVisionMeasurement(cameraInField, timeSeconds);
+//        Log.i("PoseEst", String.format("Measurement: %s", cameraInField));
+        headingFilter.correct(VecBuilder.fill(0), VecBuilder.fill(cameraInField.getRotation().getRadians()));
+        Log.i("HeadingEst", String.format("Heading Estimate: %s", headingFilter.getXhat(0) * 180.0 / Math.PI));
     }
 
     SolvePNPPipe pipe = new SolvePNPPipe();
 
-    public Pose2d correct(List<Marker> markerList, double timeSec) {
+    public Pose2d correct(List<Marker> markerList) {
         // apply solvePNP math I totally didnt copy paste
         markerList = pipe.process(markerList);
 
@@ -77,13 +102,9 @@ public class PoseEstimator {
             if(maybePose == null) continue;
 
             Pose2d fieldToCamera = PhotonUtils.estimateFieldToCamera(m.getCameraToTarget(), maybePose);
-            correct(fieldToCamera, timeSec);
+            correct(fieldToCamera);
             return fieldToCamera;
         }
         return null;
-    }
-
-    public Pose2d correct(Vector<Marker> detectedMarkers) {
-        return correct(detectedMarkers, System.currentTimeMillis() / 1000.0);
     }
 }

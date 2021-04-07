@@ -4,6 +4,7 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -14,24 +15,23 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import aruco.CameraParameters;
 import cameracalibration.CameraCalibrationActivity;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
-
-import java.io.BufferedOutputStream;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
 
 public class MainActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2, SensorEventListener {
 
@@ -49,10 +49,11 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     private final BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
         public void onManagerConnected(int status) {
+            super.onManagerConnected(status);
             if (status == LoaderCallbackInterface.SUCCESS) {
                 Log.i(TAG, "OpenCV loaded successfully");
                 mOpenCvCameraView.enableView();
-//                mOpenCvCameraView.enableFpsMeter();
+                mOpenCvCameraView.enableFpsMeter();
 //                mOpenCvCameraView.setOnTouchListener(MainActivity.this);
             } else {
                 super.onManagerConnected(status);
@@ -64,6 +65,9 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     private VisionProcessThread visionProcess;
     private Thread processThread;
     private Mat mRgba;
+    TextView textView;
+    TextView fpsTextView;
+    RequestQueue queue;
 
     SensorManager manager;
     Sensor accelerometer, gyro;
@@ -79,11 +83,18 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         mOpenCvCameraView = findViewById(R.id.color_blob_detection_activity_surface_view);
         mOpenCvCameraView.setMaxFrameSize(1280, 960);
         mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
+        mOpenCvCameraView.setCameraIndex(CameraBridgeViewBase.CAMERA_ID_FRONT);
         mOpenCvCameraView.setCvCameraViewListener(this);
 
         manager = (SensorManager) getSystemService(SENSOR_SERVICE);
         accelerometer = manager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         gyro = manager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
+
+        textView = findViewById(R.id.textView);
+        fpsTextView = findViewById(R.id.fps);
+        textView.setBackgroundColor(Color.WHITE);
+        fpsTextView.setBackgroundColor(Color.WHITE);
+        queue = Volley.newRequestQueue(this);
     }
 
     @Override
@@ -158,10 +169,20 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         mRgba.release();
     }
 
+    long lastTime = System.currentTimeMillis();
+    String fps = "FPS: ";
+
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
         mRgba = inputFrame.rgba();
         visionProcess.setInput(mRgba);
         visionProcess.getOutput(mRgba);
+
+//        Core.rotate(mRgba, mRgba, Core.ROTATE_180);
+
+        long now = System.currentTimeMillis();
+        long dt = now - lastTime;
+        lastTime = now;
+        fps = ("FPS: " + 1.0 / (dt / 1000.0));
 
         return mRgba;
     }
@@ -172,19 +193,20 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     }
 
     public void connectPi(View view) {
-        try {
-            URL host = new URL("http", "raspberrypi.local", "5555");
-            HttpURLConnection c = (HttpURLConnection) host.openConnection();
+        // Instantiate the RequestQueue.
+        String url ="http://192.168.42.14:5800/api/hello";
+        long now = System.currentTimeMillis();
 
-            c.setDoOutput(true);
-            c.setRequestMethod("PUT");
+        // Request a string response from the provided URL.
+        StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
+                response -> {
+                    // Display the first 500 characters of the response string.
+//                    textView.setText("Response is: "+ response.substring(0,500));
+                    textView.setText("DT: " + (System.currentTimeMillis() - now));
+                }, error -> textView.setText(error.getMessage()));
 
-            OutputStream out = new BufferedOutputStream(c.getOutputStream());
-            out.write("Hello".getBytes(StandardCharsets.UTF_8));
-            out.close(); // Close will flush
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        // Add the request to the RequestQueue.
+        queue.add(stringRequest);
     }
 
     @Override
@@ -194,14 +216,18 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         // since the order in which we get readings doesn't seem to be deterministic
         if(event.sensor.getType() == Sensor.TYPE_GYROSCOPE) {
             double x = event.values[0];
-            Log.i("Sensor", "Omega x " + x);
+            Log.d("Sensor", "Omega x " + x);
+            visionProcess.omega = x;
         }
         else if(event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
             // X is forward, y is left
             double x = event.values[2];
             double y = event.values[1];
-            Log.i("Sensor", "Ax " + x + " Ay " + y);
+            Log.d("Sensor", "Ax " + x + " Ay " + y);
         }
+
+        textView.setText(String.valueOf(visionProcess.estimator.headingFilter.getXhat(0) * 180.0 / Math.PI));
+//        fpsTextView.setText(fps);
     }
 
     @Override
