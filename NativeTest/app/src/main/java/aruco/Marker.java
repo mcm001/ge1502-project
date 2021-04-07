@@ -4,7 +4,7 @@ import edu.wpi.first.wpilibj.geometry.Transform2d;
 import org.opencv.calib3d.Calib3d;
 import org.opencv.core.*;
 import org.opencv.imgproc.Imgproc;
-import org.photonvision.vision.opencv.Releasable;
+import org.photonvision.vision.Releasable;
 
 import java.util.ArrayList;
 import java.util.List;
