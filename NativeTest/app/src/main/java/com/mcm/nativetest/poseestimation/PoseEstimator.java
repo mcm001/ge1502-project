@@ -9,8 +9,11 @@ import edu.wpi.first.wpiutil.math.Nat;
 import edu.wpi.first.wpiutil.math.VecBuilder;
 import edu.wpi.first.wpiutil.math.numbers.N1;
 import org.photonvision.PhotonUtils;
+import org.photonvision.vision.pipe.CVPipe;
 import org.photonvision.vision.pipe.impl.SolvePNPPipe;
+import org.photonvision.vision.target.TrackedTarget;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class PoseEstimator {
@@ -95,13 +98,21 @@ public class PoseEstimator {
 
     public Pose2d correct(List<Marker> markerList) {
         // apply solvePNP math I totally didnt copy paste
-        markerList = pipe.process(markerList);
-
+        List<TrackedTarget> targetList = new ArrayList<>();
         for(Marker m: markerList) {
-            Pose2d maybePose = TargetConstants.getMarkerPose(m.getMarkerId());
+            TrackedTarget t = new TrackedTarget(null, null, null);
+            t.setCameraRelativeTvec(m.getTvec());
+            t.setCameraRelativeRvec(m.getRvec());
+            t.setId(m.getMarkerId());
+            targetList.add(t);
+        }
+        CVPipe.CVPipeResult<List<TrackedTarget>> ret = pipe.run(targetList);
+
+        for(TrackedTarget t: ret.output) {
+            Pose2d maybePose = TargetConstants.getMarkerPose(t.markerId);
             if(maybePose == null) continue;
 
-            Pose2d fieldToCamera = PhotonUtils.estimateFieldToCamera(m.getCameraToTarget(), maybePose);
+            Pose2d fieldToCamera = PhotonUtils.estimateFieldToCamera(t.getCameraToTarget(), maybePose);
             correct(fieldToCamera);
             return fieldToCamera;
         }

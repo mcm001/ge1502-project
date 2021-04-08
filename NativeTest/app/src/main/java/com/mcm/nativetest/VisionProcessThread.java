@@ -4,11 +4,27 @@ import aruco.CameraParameters;
 import aruco.Marker;
 import aruco.MarkerDetector;
 import com.mcm.nativetest.poseestimation.PoseEstimator;
+import edu.wpi.first.wpilibj.geometry.Rotation2d;
+import org.apache.commons.lang3.tuple.Pair;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
+import org.photonvision.common.util.numbers.IntegerCouple;
+import org.photonvision.vision.frame.Frame;
+import org.photonvision.vision.frame.FrameDivisor;
+import org.photonvision.vision.frame.FrameStaticProperties;
+import org.photonvision.vision.opencv.CVMat;
+import org.photonvision.vision.opencv.ContourShape;
+import org.photonvision.vision.pipe.impl.Draw2dCrosshairPipe;
+import org.photonvision.vision.pipe.impl.Draw2dTargetsPipe;
+import org.photonvision.vision.pipe.impl.OutputMatPipe;
+import org.photonvision.vision.pipe.impl.ResizeImagePipe;
+import org.photonvision.vision.pipeline.ColoredShapePipeline;
+import org.photonvision.vision.pipeline.ColoredShapePipelineSettings;
+import org.photonvision.vision.pipeline.result.CVPipelineResult;
+import org.photonvision.vision.target.TrackedTarget;
 
 import java.util.List;
 import java.util.Vector;
@@ -39,6 +55,8 @@ public class VisionProcessThread implements Runnable {
 
 //        mDetector.setThresholdParams(9,9);
 //        mDetector.setThresholdMethod(MarkerDetector.thresSuppMethod.CANNY);
+
+        setParams();
     }
 
     public void setInput(Mat frame) {
@@ -73,27 +91,98 @@ public class VisionProcessThread implements Runnable {
                 continue;
             }
 
-            if (cameraParameters.isValid()) {
-                markerLock.lock();
-                mDetector.detect(mRgba, detectedMarkers, cameraParameters, 0.1f);
+            // These internally mutate mRgba
+            detectMarkers();
+            detectShapes();
+            drawMarkers();
 
-                for (Marker m : detectedMarkers) {
-                    m.draw3dAxis(mRgba, cameraParameters, new Scalar(0, 255, 0));
-                    m.draw3dCube(mRgba, cameraParameters, new Scalar(0, 255, 0));
-                    m.draw(mRgba, new Scalar(255, 0, 0), 2, true);
-                }
-                markerLock.unlock();
-
-                processMarkers(detectedMarkers);
-
-                detectedMarkers.forEach(Marker::release);
-            } else {
-                Imgproc.putText(mRgba, "Invalid Camera Parameters", new Point(mRgba.width() / 4, mRgba.height() / 2), Core.FONT_HERSHEY_SIMPLEX, 2, new Scalar(0, 255, 0));
-            }
             outmatlock.lock();
             mRgba.copyTo(output);
             mRgba.release();
             outmatlock.unlock();
+        }
+    }
+
+    ColoredShapePipeline coloredShapePipe = new ColoredShapePipeline();
+    FrameStaticProperties props = new FrameStaticProperties(960, 720, 90,
+            Rotation2d.fromDegrees(0), null);
+
+    private final Draw2dTargetsPipe draw2dTargetsPipe = new Draw2dTargetsPipe();
+    private final ResizeImagePipe resizeImagePipe = new ResizeImagePipe();
+    private final Draw2dCrosshairPipe draw2dCrosshairPipe = new Draw2dCrosshairPipe();
+    private final OutputMatPipe outputMatPipe = new OutputMatPipe();
+
+    private void setParams() {
+        coloredShapePipe.getSettings().contourShape = ContourShape.Custom;
+        coloredShapePipe.getSettings().hsvHue = new IntegerCouple(10, 130);
+        coloredShapePipe.getSettings().hsvSaturation = new IntegerCouple(50, 255);
+        coloredShapePipe.getSettings().hsvValue = new IntegerCouple(50, 255);
+        coloredShapePipe.getSettings().accuracyPercentage = 20;
+        coloredShapePipe.getSettings().outputShowMultipleTargets = true;
+        coloredShapePipe.getSettings().streamingFrameDivisor = FrameDivisor.NONE;
+
+        ColoredShapePipelineSettings settings = coloredShapePipe.getSettings();
+
+        resizeImagePipe.setParams(new ResizeImagePipe.ResizeImageParams(settings.streamingFrameDivisor));
+        draw2dTargetsPipe.setParams(new Draw2dTargetsPipe.Draw2dTargetsParams(true, true, settings.streamingFrameDivisor));
+        draw2dCrosshairPipe.setParams(new Draw2dCrosshairPipe.Draw2dCrosshairParams(props, settings.streamingFrameDivisor));
+        outputMatPipe.setParams(new OutputMatPipe.OutputMatParams());
+    }
+
+    private void detectShapes() {
+        Imgproc.cvtColor(mRgba, mRgba, Imgproc.COLOR_RGBA2BGR);
+//        Imgproc.line(mRgba, new Point(0, 0), new Point(1000, 1000), new Scalar(1, 1, 1), 10);
+//        Imgproc.circle(mRgba, new Point(300, 300), 100, new Scalar(0, 0, 150), Core.FILLED);
+        if (true) return;
+
+        Frame f = new Frame(new CVMat(mRgba), props);
+        CVPipelineResult result = coloredShapePipe.run(f);
+
+        Mat inMat = result.inputFrame.image.getMat();
+        Mat outMat = result.outputFrame.image.getMat();
+
+        List<TrackedTarget> targetsToDraw = result.targets;
+
+        resizeImagePipe.run(inMat);
+        draw2dCrosshairPipe.run(Pair.of(inMat, targetsToDraw));
+        draw2dTargetsPipe.run(Pair.of(inMat, targetsToDraw));
+
+        resizeImagePipe.run(outMat);
+        outputMatPipe.run(outMat);
+        draw2dCrosshairPipe.run(Pair.of(outMat, targetsToDraw));
+        draw2dTargetsPipe.run(Pair.of(outMat, targetsToDraw));
+
+//        inMat.copyTo(mRgba);
+        outMat.copyTo(mRgba);
+
+        Imgproc.cvtColor(mRgba, mRgba, Imgproc.COLOR_BGR2RGBA);
+    }
+
+    private void detectMarkers() {
+        if (cameraParameters.isValid()) {
+            markerLock.lock();
+            mDetector.detect(mRgba, detectedMarkers, cameraParameters, 0.1f);
+            markerLock.unlock();
+
+            processMarkers(detectedMarkers);
+
+        } else {
+            Imgproc.putText(mRgba, "Invalid Camera Parameters", new Point(mRgba.width() / 4, mRgba.height() / 2), Core.FONT_HERSHEY_SIMPLEX, 2, new Scalar(0, 255, 0));
+        }
+    }
+
+    private void drawMarkers() {
+        if (cameraParameters.isValid()) {
+            markerLock.lock();
+            for (Marker m : detectedMarkers) {
+                m.draw3dAxis(mRgba, cameraParameters, new Scalar(0, 255, 0));
+                m.draw3dCube(mRgba, cameraParameters, new Scalar(0, 255, 0));
+                m.draw(mRgba, new Scalar(255, 0, 0), 2, true);
+            }
+            detectedMarkers.forEach(Marker::release);
+            markerLock.unlock();
+        } else {
+            Imgproc.putText(mRgba, "Invalid Camera Parameters", new Point(mRgba.width() / 4, mRgba.height() / 2), Core.FONT_HERSHEY_SIMPLEX, 2, new Scalar(0, 255, 0));
         }
     }
 
@@ -103,7 +192,7 @@ public class VisionProcessThread implements Runnable {
         double now = System.currentTimeMillis() / 1000.0;
         estimator.update(now, ax, ay, omega);
 
-        if(!m.isEmpty())
+        if (!m.isEmpty())
             estimator.correct(m);
     }
 }

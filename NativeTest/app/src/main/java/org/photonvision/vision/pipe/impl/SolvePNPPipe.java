@@ -17,35 +17,81 @@
 
 package org.photonvision.vision.pipe.impl;
 
-import aruco.Marker;
 import edu.wpi.first.wpilibj.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.geometry.Transform2d;
 import edu.wpi.first.wpilibj.geometry.Translation2d;
 import org.opencv.calib3d.Calib3d;
-import org.opencv.core.Core;
-import org.opencv.core.Mat;
-import org.opencv.core.MatOfPoint2f;
-import org.opencv.core.Scalar;
+import org.opencv.core.*;
+import org.photonvision.common.logging.LogGroup;
+import org.photonvision.common.logging.Logger;
+import org.photonvision.vision.calibration.CameraCalibrationCoefficients;
+import org.photonvision.vision.pipe.CVPipe;
+import org.photonvision.vision.target.TargetModel;
+import org.photonvision.vision.target.TrackedTarget;
 
 import java.util.List;
 
-public class SolvePNPPipe {
+public class SolvePNPPipe
+        extends CVPipe<List<TrackedTarget>, List<TrackedTarget>, SolvePNPPipe.SolvePNPPipeParams> {
+
+    private static final Logger logger = new Logger(SolvePNPPipe.class, LogGroup.VisionModule);
+
     private final MatOfPoint2f imagePoints = new MatOfPoint2f();
 
     private boolean hasWarned = false;
 
-    public List<Marker> process(List<Marker> targetList) {
-        for (Marker target : targetList) {
+    @Override
+    protected List<TrackedTarget> process(List<TrackedTarget> targetList) {
+        if (params.cameraCoefficients == null
+                || params.cameraCoefficients.getCameraIntrinsicsMat() == null
+                || params.cameraCoefficients.getCameraExtrinsicsMat() == null) {
+            if (!hasWarned) {
+                logger.warn(
+                        "Cannot perform solvePNP an uncalibrated camera! Please calibrate this resolution...");
+                hasWarned = true;
+            }
+            return targetList;
+        }
+
+        for (TrackedTarget target : targetList) {
             calculateTargetPose(target);
         }
         return targetList;
     }
 
-    private void calculateTargetPose(Marker target) {
-        Transform2d targetPose = correctLocationForCameraPitch(
-                target.getTvec(),
-                target.getRvec(),
-                new Rotation2d());
+    private void calculateTargetPose(TrackedTarget target) {
+        Transform2d targetPose;
+
+        List<Point> corners = target.getTargetCorners();
+        if (corners == null
+                || corners.isEmpty()
+                || params.cameraCoefficients == null
+                || params.cameraCoefficients.getCameraIntrinsicsMat() == null
+                || params.cameraCoefficients.getCameraExtrinsicsMat() == null) {
+            return;
+        }
+        this.imagePoints.fromList(corners);
+
+        Mat rVec = new Mat();
+        Mat tVec = new Mat();
+        try {
+            Calib3d.solvePnP(
+                    params.targetModel.getRealWorldTargetCoordinates(),
+                    imagePoints,
+                    params.cameraCoefficients.getCameraIntrinsicsMat(),
+                    params.cameraCoefficients.getCameraExtrinsicsMat(),
+                    rVec,
+                    tVec);
+        } catch (Exception e) {
+            logger.error("Exception when attempting solvePnP!", e);
+            return;
+        }
+
+        target.setCameraRelativeTvec(tVec);
+        target.setCameraRelativeRvec(rVec);
+
+        targetPose = correctLocationForCameraPitch(tVec, rVec, params.cameraPitchAngle);
+
         target.setCameraToTarget(targetPose);
     }
 
@@ -105,5 +151,20 @@ public class SolvePNPPipe {
         Scalar s = new Scalar(factor);
         Core.multiply(src, s, dst);
         return dst;
+    }
+
+    public static class SolvePNPPipeParams {
+        private final CameraCalibrationCoefficients cameraCoefficients;
+        private final Rotation2d cameraPitchAngle;
+        private final TargetModel targetModel;
+
+        public SolvePNPPipeParams(
+                CameraCalibrationCoefficients cameraCoefficients,
+                Rotation2d cameraPitchAngle,
+                TargetModel targetModel) {
+            this.cameraCoefficients = cameraCoefficients;
+            this.cameraPitchAngle = cameraPitchAngle;
+            this.targetModel = targetModel;
+        }
     }
 }
