@@ -4,6 +4,7 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -15,6 +16,7 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
@@ -26,10 +28,8 @@ import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
-import org.opencv.android.BaseLoaderCallback;
-import org.opencv.android.CameraBridgeViewBase;
-import org.opencv.android.LoaderCallbackInterface;
-import org.opencv.android.OpenCVLoader;
+import org.opencv.android.*;
+import org.opencv.core.CvException;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 
@@ -44,6 +44,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
     CameraBridgeViewBase mOpenCvCameraView;
     CameraParameters cameraParameters;
+    ImageView thresholdOutput;
 
     // This callback only enables the camera once we're connected1
     private final BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
@@ -65,6 +66,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     private VisionProcessThread visionProcess;
     private Thread processThread;
     private Mat mRgba;
+    private Mat mColorOutput;
     TextView textView;
     TextView fpsTextView;
     RequestQueue queue;
@@ -81,12 +83,14 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.activity_main);
 
-        mOpenCvCameraView = findViewById(R.id.color_blob_detection_activity_surface_view);
+        mOpenCvCameraView = findViewById(R.id.colored_image_output);
         mOpenCvCameraView.setMaxFrameSize(1280, 960);
         mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
 //        mOpenCvCameraView.setCameraIndex(CameraBridgeViewBase.CAMERA_ID_FRONT);
         mOpenCvCameraView.setCameraIndex(CameraBridgeViewBase.CAMERA_ID_BACK);
         mOpenCvCameraView.setCvCameraViewListener(this);
+
+        thresholdOutput = findViewById(R.id.threshold_image_output);
 
         manager = (SensorManager) getSystemService(SENSOR_SERVICE);
         accelerometer = manager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
@@ -171,6 +175,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
     public void onCameraViewStarted(int width, int height) {
         mRgba = new Mat(height, width, CvType.CV_8UC4);
+        mColorOutput = new Mat(height, width, CvType.CV_8UC3);
     }
 
     public void onCameraViewStopped() {
@@ -183,7 +188,8 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
         mRgba = inputFrame.rgba();
         visionProcess.setInput(mRgba);
-        visionProcess.getOutput(mRgba);
+        visionProcess.getThresholdOutput(mRgba);
+        visionProcess.getColorOutput(mColorOutput);
 
 //        Core.rotate(mRgba, mRgba, Core.ROTATE_180);
 
@@ -191,6 +197,17 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         long dt = now - lastTime;
         lastTime = now;
         fps = ("FPS: " + 1.0 / (dt / 1000.0));
+
+
+        try {
+            Bitmap bmp;
+            bmp = Bitmap.createBitmap(mColorOutput.cols(), mColorOutput.rows(), Bitmap.Config.ARGB_8888);
+            Utils.matToBitmap(mColorOutput, bmp);
+            this.runOnUiThread(() -> this.thresholdOutput.setImageBitmap(bmp));
+        }
+        catch (CvException e){
+            Log.d("Exception",e.getMessage());
+        }
 
         return mRgba;
     }

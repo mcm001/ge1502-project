@@ -76,26 +76,39 @@
             app:layout_constraintEnd_toStartOf="@+id/textView"
             app:layout_constraintStart_toEndOf="@+id/button" />
 
+        <!-- Hue -->
+
         <org.opencv.android.JavaCameraView
-            android:id="@+id/color_blob_detection_activity_surface_view"
-            android:layout_width="match_parent"
+            android:id="@+id/colored_image_output"
+            android:layout_width="300dp"
             android:layout_height="200dp"
+            android:layout_marginBottom="20dp"
             app:layout_constraintBottom_toTopOf="@+id/hueMin"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="@+id/guideline2" />
 
-        <!-- Hue -->
+        <ImageView
+            android:id="@+id/threshold_image_output"
+            android:layout_width="300dp"
+            android:layout_height="200dp"
+            app:layout_constraintBottom_toBottomOf="@+id/colored_image_output"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/guideline2"
+            android:contentDescription="TODO" />
+
         <TextView
             android:id="@+id/hueMinText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Hue Min: 0"
             app:layout_constraintBottom_toBottomOf="@+id/hueMin"
+
             app:layout_constraintEnd_toStartOf="@+id/guideline3"
             app:layout_constraintTop_toTopOf="@+id/hueMin" />
 
         <SeekBar
             android:id="@+id/hueMin"
-            android:layout_width="130dp"
+            android:layout_width="@dimen/sliderWidth"
             android:layout_height="wrap_content"
             android:layout_marginStart="24dp"
             android:layout_marginTop="16dp"
@@ -103,7 +116,7 @@
             app:layout_constraintEnd_toStartOf="@+id/hueMax"
             app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="@+id/guideline3"
-            app:layout_constraintTop_toBottomOf="@+id/color_blob_detection_activity_surface_view" />
+            app:layout_constraintTop_toBottomOf="@+id/colored_image_output" />
 
         <TextView
             android:id="@+id/hueMaxText"
@@ -117,7 +130,7 @@
 
         <SeekBar
             android:id="@+id/hueMax"
-            android:layout_width="130dp"
+            android:layout_width="@dimen/sliderWidth"
             android:layout_height="wrap_content"
             android:layout_marginEnd="24dp"
             android:layout_marginBottom="1dp"
@@ -137,7 +150,7 @@
 
         <SeekBar
             android:id="@+id/satMin"
-            android:layout_width="130dp"
+            android:layout_width="@dimen/sliderWidth"
             android:layout_height="wrap_content"
             android:layout_marginStart="24dp"
             android:layout_marginTop="16dp"
@@ -159,7 +172,7 @@
 
         <SeekBar
             android:id="@+id/satMax"
-            android:layout_width="130dp"
+            android:layout_width="@dimen/sliderWidth"
             android:layout_height="wrap_content"
             android:layout_marginEnd="24dp"
             android:layout_marginBottom="1dp"
@@ -179,7 +192,7 @@
 
         <SeekBar
             android:id="@+id/valueMin"
-            android:layout_width="130dp"
+            android:layout_width="@dimen/sliderWidth"
             android:layout_height="wrap_content"
             android:layout_marginStart="24dp"
             android:layout_marginTop="16dp"
@@ -201,7 +214,7 @@
 
         <SeekBar
             android:id="@+id/valueMax"
-            android:layout_width="130dp"
+            android:layout_width="@dimen/sliderWidth"
             android:layout_height="wrap_content"
             android:layout_marginEnd="24dp"
             android:layout_marginBottom="1dp"

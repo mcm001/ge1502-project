@@ -35,6 +35,7 @@ public class VisionProcessThread implements Runnable {
     private final Lock inmatlock = new ReentrantLock(true);
     private Mat input;
     private Mat output;
+    private Mat colorOutput = new Mat();
     private long inTime = 0;
     public boolean exit = false;
     private final CameraParameters cameraParameters;
@@ -56,7 +57,6 @@ public class VisionProcessThread implements Runnable {
 //        mDetector.setThresholdParams(9,9);
 //        mDetector.setThresholdMethod(MarkerDetector.thresSuppMethod.CANNY);
 
-        setParams();
     }
 
     public void setInput(Mat frame) {
@@ -67,7 +67,7 @@ public class VisionProcessThread implements Runnable {
         inmatlock.unlock();
     }
 
-    public void getOutput(Mat frame) {
+    public void getThresholdOutput(Mat frame) {
         if (output.empty()) {
             inmatlock.lock();
             input.copyTo(frame);
@@ -76,6 +76,17 @@ public class VisionProcessThread implements Runnable {
         }
         outmatlock.lock();
         output.copyTo(frame);
+        outmatlock.unlock();
+    }
+    public void getColorOutput(Mat frame) {
+        if (colorOutput.empty()) {
+            inmatlock.lock();
+            input.copyTo(frame);
+            inmatlock.unlock();
+            return;
+        }
+        outmatlock.lock();
+        colorOutput.copyTo(frame);
         outmatlock.unlock();
     }
 
@@ -92,6 +103,7 @@ public class VisionProcessThread implements Runnable {
             }
 
             // These internally mutate mRgba
+            setParams();
             detectMarkers();
             detectShapes();
             drawMarkers();
@@ -104,8 +116,7 @@ public class VisionProcessThread implements Runnable {
     }
 
     ColoredShapePipeline coloredShapePipe = new ColoredShapePipeline();
-    FrameStaticProperties props = new FrameStaticProperties(960, 720, 90,
-            Rotation2d.fromDegrees(0), null);
+    FrameStaticProperties props;
 
     private final Draw2dTargetsPipe draw2dTargetsPipe = new Draw2dTargetsPipe();
     private final ResizeImagePipe resizeImagePipe = new ResizeImagePipe();
@@ -123,6 +134,7 @@ public class VisionProcessThread implements Runnable {
 
         ColoredShapePipelineSettings settings = coloredShapePipe.getSettings();
 
+        props = new FrameStaticProperties(mRgba.width(), mRgba.height(), 90, Rotation2d.fromDegrees(0), null);
         resizeImagePipe.setParams(new ResizeImagePipe.ResizeImageParams(settings.streamingFrameDivisor));
         draw2dTargetsPipe.setParams(new Draw2dTargetsPipe.Draw2dTargetsParams(true, true, settings.streamingFrameDivisor));
         draw2dCrosshairPipe.setParams(new Draw2dCrosshairPipe.Draw2dCrosshairParams(props, settings.streamingFrameDivisor));
@@ -152,10 +164,11 @@ public class VisionProcessThread implements Runnable {
         draw2dCrosshairPipe.run(Pair.of(outMat, targetsToDraw));
         draw2dTargetsPipe.run(Pair.of(outMat, targetsToDraw));
 
-//        inMat.copyTo(mRgba);
+        inMat.copyTo(colorOutput);
         outMat.copyTo(mRgba);
 
         Imgproc.cvtColor(mRgba, mRgba, Imgproc.COLOR_BGR2RGBA);
+        Imgproc.cvtColor(colorOutput, colorOutput, Imgproc.COLOR_BGR2RGB);
     }
 
     private void detectMarkers() {
@@ -204,4 +217,5 @@ public class VisionProcessThread implements Runnable {
     public void setSettings(ColoredShapePipelineSettings settings) {
         coloredShapePipe.setSettings(settings);
     }
+
 }
