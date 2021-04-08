@@ -6,49 +6,47 @@
         android:layout_height="match_parent"
         tools:context=".MainActivity">
 
-    <org.opencv.android.JavaCameraView
-            android:id="@+id/color_blob_detection_activity_surface_view"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-    />
-
     <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:orientation="horizontal">
-
-        <Button
-                android:id="@+id/button"
-                android:layout_width="wrap_content"
+            android:orientation="vertical">
+        <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:onClick="calibrate"
-                android:text="Recalibrate"/>
+                android:orientation="horizontal">
 
-        <Button
-                android:id="@+id/connectButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:onClick="connectPi"
-                android:text="Connect To Pi"/>
+            <Button
+                    android:id="@+id/button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:onClick="calibrate"
+                    android:layout_weight="1"
+                    android:text="Recalibrate"/>
+            <Button
+                    android:id="@+id/connectButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:onClick="connectPi"
+                    android:layout_weight="1"
+                    android:text="Connect To Pi"/>
+            <TextView android:layout_width="wrap_content"
+                      android:layout_height="wrap_content"
+                      android:text="Hello"
+                      android:layout_weight="1"
+                      android:id="@+id/textView"/>
 
-        <TextView android:layout_width="wrap_content"
-                  android:layout_height="wrap_content"
-                  android:text="Hello"
-                  android:id="@+id/textView"/>
+            <TextView android:layout_width="wrap_content"
+                      android:layout_height="wrap_content"
+                      android:text="FPS"
+                      android:layout_weight="1"
+                      android:id="@+id/fps"/>
+        </LinearLayout>
 
-        <TextView android:layout_width="wrap_content"
-                  android:layout_height="wrap_content"
-                  android:text="FPS"
-                  android:id="@+id/fps"/>
-
-        <!--        <Button-->
-        <!--                android:id="@+id/usb_button"-->
-        <!--                android:layout_width="wrap_content"-->
-        <!--                android:layout_height="wrap_content"-->
-        <!--                android:layout_weight="1"-->
-        <!--                android:onClick="checkUSB"-->
-        <!--                android:text="CHeck usb" />-->
-
+        <org.opencv.android.JavaCameraView
+                android:id="@+id/color_blob_detection_activity_surface_view"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+        />
     </LinearLayout>
 
 
