@@ -1,53 +1,94 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-        xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:tools="http://schemas.android.com/tools"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        tools:context=".MainActivity">
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
 
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content">
+
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical">
-        <LinearLayout
+
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal">
 
-            <Button
+                <Button
                     android:id="@+id/button"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:onClick="calibrate"
                     android:layout_weight="1"
-                    android:text="Recalibrate"/>
-            <Button
+                    android:text="Recalibrate" />
+
+                <Button
                     android:id="@+id/connectButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:onClick="connectPi"
                     android:layout_weight="1"
-                    android:text="Connect To Pi"/>
-            <TextView android:layout_width="wrap_content"
-                      android:layout_height="wrap_content"
-                      android:text="Hello"
-                      android:layout_weight="1"
-                      android:id="@+id/textView"/>
+                    android:text="Connect To Pi" />
 
-            <TextView android:layout_width="wrap_content"
-                      android:layout_height="wrap_content"
-                      android:text="FPS"
-                      android:layout_weight="1"
-                      android:id="@+id/fps"/>
-        </LinearLayout>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Hello"
+                    android:layout_weight="1"
+                    android:id="@+id/textView" />
 
-        <org.opencv.android.JavaCameraView
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="FPS"
+                    android:layout_weight="1"
+                    android:id="@+id/fps" />
+            </LinearLayout>
+
+            <org.opencv.android.JavaCameraView
                 android:id="@+id/color_blob_detection_activity_surface_view"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-        />
-    </LinearLayout>
+                android:layout_height="300dp" />
+
+            <!-- HSV, erode/dilate, pipeline selection -->
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Hue Min: 0"
+                android:layout_margin="10dp"
+                android:id="@+id/hueMinText" />
+
+            <SeekBar
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/hueMin"
+                android:layout_margin="10dp"
+                android:max="180" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Hue Max: 180"
+                android:layout_margin="10dp"
+                android:id="@+id/hueMaxText" />
+
+            <SeekBar
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/hueMax"
+                android:layout_margin="10dp"
+                android:max="180" />
 
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+        </LinearLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+</ScrollView>
