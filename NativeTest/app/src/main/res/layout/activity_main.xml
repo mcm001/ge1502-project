@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -9,84 +10,204 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content">
 
-        <LinearLayout
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guideline2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            app:layout_constraintGuide_begin="59dp" />
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guideline3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintGuide_begin="114dp" />
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guideline4"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintGuide_end="114dp" />
+
+        <Button
+            android:id="@+id/button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="68dp"
+            android:layout_weight="1"
+            android:onClick="calibrate"
+            android:text="Recalibrate"
+            app:layout_constraintBottom_toTopOf="@+id/guideline2"
+            app:layout_constraintStart_toEndOf="@+id/connectButton" />
+
+        <!-- HSV, erode/dilate, pipeline selection -->
+
+        <Button
+            android:id="@+id/connectButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="32dp"
+            android:layout_weight="1"
+            android:onClick="connectPi"
+            android:text="Connect To Pi"
+            app:layout_constraintBottom_toTopOf="@+id/guideline2"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <TextView
+            android:id="@+id/textView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="32dp"
+            android:layout_weight="1"
+            android:text="Hello"
+            app:layout_constraintBottom_toTopOf="@+id/guideline2"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <TextView
+            android:id="@+id/fps"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="FPS: NaN"
+            app:layout_constraintBottom_toTopOf="@+id/guideline2"
+            app:layout_constraintEnd_toStartOf="@+id/textView"
+            app:layout_constraintStart_toEndOf="@+id/button" />
+
+        <org.opencv.android.JavaCameraView
+            android:id="@+id/color_blob_detection_activity_surface_view"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical">
+            android:layout_height="200dp"
+            app:layout_constraintBottom_toTopOf="@+id/hueMin"
+            app:layout_constraintTop_toTopOf="@+id/guideline2" />
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
+        <!-- Hue -->
+        <TextView
+            android:id="@+id/hueMinText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Hue Min: 0"
+            app:layout_constraintBottom_toBottomOf="@+id/hueMin"
+            app:layout_constraintEnd_toStartOf="@+id/guideline3"
+            app:layout_constraintTop_toTopOf="@+id/hueMin" />
 
-                <Button
-                    android:id="@+id/button"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:onClick="calibrate"
-                    android:layout_weight="1"
-                    android:text="Recalibrate" />
+        <SeekBar
+            android:id="@+id/hueMin"
+            android:layout_width="130dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="24dp"
+            android:layout_marginTop="16dp"
+            android:max="180"
+            app:layout_constraintEnd_toStartOf="@+id/hueMax"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toStartOf="@+id/guideline3"
+            app:layout_constraintTop_toBottomOf="@+id/color_blob_detection_activity_surface_view" />
 
-                <Button
-                    android:id="@+id/connectButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:onClick="connectPi"
-                    android:layout_weight="1"
-                    android:text="Connect To Pi" />
+        <TextView
+            android:id="@+id/hueMaxText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="10dp"
+            android:text="Hue Max: 180"
+            app:layout_constraintBottom_toBottomOf="@+id/hueMax"
+            app:layout_constraintStart_toStartOf="@+id/guideline4"
+            app:layout_constraintTop_toTopOf="@+id/hueMax" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Hello"
-                    android:layout_weight="1"
-                    android:id="@+id/textView" />
+        <SeekBar
+            android:id="@+id/hueMax"
+            android:layout_width="130dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="24dp"
+            android:layout_marginBottom="1dp"
+            android:max="180"
+            app:layout_constraintBottom_toBottomOf="@+id/hueMin"
+            app:layout_constraintEnd_toStartOf="@+id/guideline4" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="FPS"
-                    android:layout_weight="1"
-                    android:id="@+id/fps" />
-            </LinearLayout>
+        <!-- Saturation-->
+        <TextView
+            android:id="@+id/satMinText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Sat Min: 0"
+            app:layout_constraintBottom_toBottomOf="@+id/satMin"
+            app:layout_constraintEnd_toStartOf="@+id/guideline3"
+            app:layout_constraintTop_toTopOf="@+id/satMin" />
 
-            <org.opencv.android.JavaCameraView
-                android:id="@+id/color_blob_detection_activity_surface_view"
-                android:layout_width="match_parent"
-                android:layout_height="300dp" />
+        <SeekBar
+            android:id="@+id/satMin"
+            android:layout_width="130dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="24dp"
+            android:layout_marginTop="16dp"
+            android:max="180"
+            app:layout_constraintEnd_toStartOf="@+id/hueMax"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toStartOf="@+id/guideline3"
+            app:layout_constraintTop_toBottomOf="@+id/hueMin" />
 
-            <!-- HSV, erode/dilate, pipeline selection -->
+        <TextView
+            android:id="@+id/satMaxText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="10dp"
+            android:text="Sat Max: 180"
+            app:layout_constraintBottom_toBottomOf="@+id/satMax"
+            app:layout_constraintStart_toStartOf="@+id/guideline4"
+            app:layout_constraintTop_toTopOf="@+id/satMax" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Hue Min: 0"
-                android:layout_margin="10dp"
-                android:id="@+id/hueMinText" />
+        <SeekBar
+            android:id="@+id/satMax"
+            android:layout_width="130dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="24dp"
+            android:layout_marginBottom="1dp"
+            android:max="180"
+            app:layout_constraintBottom_toBottomOf="@+id/satMin"
+            app:layout_constraintEnd_toStartOf="@+id/guideline4" />
 
-            <SeekBar
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:id="@+id/hueMin"
-                android:layout_margin="10dp"
-                android:max="180" />
+        <!-- Value -->
+        <TextView
+            android:id="@+id/valueMinText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Value Min: 0"
+            app:layout_constraintBottom_toBottomOf="@+id/valueMin"
+            app:layout_constraintEnd_toStartOf="@+id/guideline3"
+            app:layout_constraintTop_toTopOf="@+id/valueMin" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Hue Max: 180"
-                android:layout_margin="10dp"
-                android:id="@+id/hueMaxText" />
+        <SeekBar
+            android:id="@+id/valueMin"
+            android:layout_width="130dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="24dp"
+            android:layout_marginTop="16dp"
+            android:max="180"
+            app:layout_constraintEnd_toStartOf="@+id/hueMax"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toStartOf="@+id/guideline3"
+            app:layout_constraintTop_toBottomOf="@+id/satMin" />
 
-            <SeekBar
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:id="@+id/hueMax"
-                android:layout_margin="10dp"
-                android:max="180" />
+        <TextView
+            android:id="@+id/valueMaxText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="10dp"
+            android:text="Value Max: 180"
+            app:layout_constraintBottom_toBottomOf="@+id/valueMax"
+            app:layout_constraintStart_toStartOf="@+id/guideline4"
+            app:layout_constraintTop_toTopOf="@+id/valueMax" />
 
-
-        </LinearLayout>
+        <SeekBar
+            android:id="@+id/valueMax"
+            android:layout_width="130dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="24dp"
+            android:layout_marginBottom="1dp"
+            android:max="180"
+            app:layout_constraintBottom_toBottomOf="@+id/valueMin"
+            app:layout_constraintEnd_toStartOf="@+id/guideline4" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

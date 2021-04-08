@@ -133,7 +133,7 @@ public class VisionProcessThread implements Runnable {
         Imgproc.cvtColor(mRgba, mRgba, Imgproc.COLOR_RGBA2BGR);
 //        Imgproc.line(mRgba, new Point(0, 0), new Point(1000, 1000), new Scalar(1, 1, 1), 10);
 //        Imgproc.circle(mRgba, new Point(300, 300), 100, new Scalar(0, 0, 150), Core.FILLED);
-        if (true) return;
+//        if (true) return;
 
         Frame f = new Frame(new CVMat(mRgba), props);
         CVPipelineResult result = coloredShapePipe.run(f);
@@ -186,13 +186,22 @@ public class VisionProcessThread implements Runnable {
         }
     }
 
-    private void processMarkers(List<Marker> m) {
+    private void processMarkers(List<Marker> markers) {
         // So right now the best we can do is nothing
         // Love to see it
         double now = System.currentTimeMillis() / 1000.0;
         estimator.update(now, ax, ay, omega);
 
-        if (!m.isEmpty())
-            estimator.correct(m);
+        if (!markers.isEmpty()) {
+            estimator.correct(markers);
+        }
+    }
+
+    public ColoredShapePipelineSettings getColoredShapeSettings() {
+        return coloredShapePipe.getSettings();
+    }
+
+    public void setSettings(ColoredShapePipelineSettings settings) {
+        coloredShapePipe.setSettings(settings);
     }
 }

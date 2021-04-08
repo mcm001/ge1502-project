@@ -59,7 +59,7 @@ public class TrackedTarget implements Releasable {
         this.m_mainContour = origTarget.m_mainContour;
         this.m_subContours = origTarget.m_subContours;
         this.m_shape = shape;
-        calculateValues(params);
+        if(params != null) calculateValues(params);
     }
 
     /**

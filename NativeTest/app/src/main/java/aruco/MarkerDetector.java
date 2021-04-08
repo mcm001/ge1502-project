@@ -54,7 +54,7 @@ public class MarkerDetector {
         // the detection in the incoming frame will be done in a different vector
         // because this will allow the ontouchlistener in View
         // to have a valid detectedMarkers vector longer
-        Vector<Marker> newMarkers = new Vector<Marker>();
+        Vector<Marker> newMarkers = new Vector<>();
 
         // do the threshold of image and detect contours
         Imgproc.cvtColor(in, grey, Imgproc.COLOR_RGBA2GRAY);
@@ -117,7 +117,7 @@ public class MarkerDetector {
         // sort the points in anti-clockwise order
         for (int i = 0; i < nCandidates; i++) {
             Marker marker = candidateMarkers.get(i);
-            List<Point> p = new Vector<Point>();
+            List<Point> p;
             p = marker.toList();
             // trace a line between the first and second point.
             // if the third point is at the right side, then the points are anti-clockwise
@@ -133,17 +133,17 @@ public class MarkerDetector {
         }// points sorted in anti-clockwise order
 
         // remove the elements whose corners are to close to each other // TODO necessary?
-        Vector<Integer> tooNearCandidates = new Vector<Integer>(); // stores the indexes in the candidateMarkers
+        Vector<Integer> tooNearCandidates = new Vector<>(); // stores the indexes in the candidateMarkers
         // i.e [2,3,4,5] the marker 2 is too close to 3 and 4 to 5
         for (int i = 0; i < nCandidates; i++) {
             Marker toMarker = candidateMarkers.get(i);
-            List<Point> toPoints = new Vector<Point>();
+            List<Point> toPoints;
             toPoints = toMarker.toList();
             // calculate the average distance of each corner to the nearest corner in the other marker
             for (int j = i + 1; j < nCandidates; j++) {
                 float dist = 0;
                 Marker fromMarker = candidateMarkers.get(j);
-                List<Point> fromPoints = new Vector<Point>();
+                List<Point> fromPoints;
                 fromPoints = fromMarker.toList();
                 // unrolling loop
                 dist += Math.sqrt((fromPoints.get(0).x - toPoints.get(0).x) * (fromPoints.get(0).x - toPoints.get(0).x) +

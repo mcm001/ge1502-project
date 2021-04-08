@@ -71,6 +71,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
     SensorManager manager;
     Sensor accelerometer, gyro;
+    private HSVListener hsvListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -96,6 +97,12 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         textView.setBackgroundColor(Color.WHITE);
         fpsTextView.setBackgroundColor(Color.WHITE);
         queue = Volley.newRequestQueue(this);
+
+        this.hsvListener = new HSVListener(this);
+    }
+
+    public VisionProcessThread getVisionProcess() {
+        return this.visionProcess;
     }
 
     @Override
@@ -103,7 +110,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         super.onPause();
         if (mOpenCvCameraView != null)
             mOpenCvCameraView.disableView();
-        if(processThread != null) {
+        if (processThread != null) {
             visionProcess.exit = true;
             processThread.interrupt();
         }
@@ -127,7 +134,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                 // Show an explanation to the user *asynchronously* -- don't block
                 // this thread waiting for the user's response! After the user
                 // sees the explanation, try again to request the permission.
-                Toast.makeText(this,  "You should gib perm kthx", Toast.LENGTH_SHORT);
+                Toast.makeText(this, "You should gib perm kthx", Toast.LENGTH_SHORT);
             } else {
 
                 // No explanation needed, we can request the permission.
@@ -148,7 +155,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             if (!cameraParameters.isValid()) {
                 calibrate(findViewById(R.id.content));
             }
-            if(visionProcess == null) visionProcess = new VisionProcessThread(cameraParameters);
+            if (visionProcess == null) visionProcess = new VisionProcessThread(cameraParameters);
             visionProcess.exit = false;
             if (processThread != null) {
                 processThread.interrupt();
@@ -195,7 +202,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
     public void connectPi(View view) {
         // Instantiate the RequestQueue.
-        String url ="http://192.168.42.14:5800/api/hello";
+        String url = "http://192.168.42.14:5800/api/hello";
         long now = System.currentTimeMillis();
 
         // Request a string response from the provided URL.
@@ -212,22 +219,21 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
     @Override
     public void onSensorChanged(SensorEvent event) {
-        if(event == null) return;
+        if (event == null) return;
         // I have no idea of a better way to do this
         // since the order in which we get readings doesn't seem to be deterministic
-        if(event.sensor.getType() == Sensor.TYPE_GYROSCOPE) {
+        if (event.sensor.getType() == Sensor.TYPE_GYROSCOPE) {
             double x = event.values[0];
             Log.d("Sensor", "Omega x " + x);
             visionProcess.omega = x;
-        }
-        else if(event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
+        } else if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
             // X is forward, y is left
             double x = event.values[2];
             double y = event.values[1];
             Log.d("Sensor", "Ax " + x + " Ay " + y);
         }
 
-        textView.setText(String.valueOf(visionProcess.estimator.headingFilter.getXhat(0) * 180.0 / Math.PI));
+        textView.setText("Angle: " + (int) (visionProcess.estimator.headingFilter.getXhat(0) * 180.0 / Math.PI));
 //        fpsTextView.setText(fps);
     }
 
