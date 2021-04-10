@@ -26,4 +26,9 @@ public class IntegerCouple extends NumberCouple<Integer> {
     public IntegerCouple(Integer first, Integer second) {
         super(first, second);
     }
+
+    @Override
+    public String toString() {
+        return "{" + first + "," + second + "}";
+    }
 }

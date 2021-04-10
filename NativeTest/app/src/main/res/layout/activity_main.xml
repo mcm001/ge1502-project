@@ -154,7 +154,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="24dp"
             android:layout_marginTop="16dp"
-            android:max="180"
+            android:max="255"
             app:layout_constraintEnd_toStartOf="@+id/hueMax"
             app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="@+id/guideline3"
@@ -165,7 +165,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="10dp"
-            android:text="Sat Max: 180"
+            android:text="Sat Max: 255"
             app:layout_constraintBottom_toBottomOf="@+id/satMax"
             app:layout_constraintStart_toStartOf="@+id/guideline4"
             app:layout_constraintTop_toTopOf="@+id/satMax" />
@@ -176,7 +176,7 @@
             android:layout_height="wrap_content"
             android:layout_marginEnd="24dp"
             android:layout_marginBottom="1dp"
-            android:max="180"
+            android:max="255"
             app:layout_constraintBottom_toBottomOf="@+id/satMin"
             app:layout_constraintEnd_toStartOf="@+id/guideline4" />
 
@@ -196,7 +196,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="24dp"
             android:layout_marginTop="16dp"
-            android:max="180"
+            android:max="255"
             app:layout_constraintEnd_toStartOf="@+id/hueMax"
             app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="@+id/guideline3"
@@ -207,7 +207,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="10dp"
-            android:text="Value Max: 180"
+            android:text="Value Max: 255"
             app:layout_constraintBottom_toBottomOf="@+id/valueMax"
             app:layout_constraintStart_toStartOf="@+id/guideline4"
             app:layout_constraintTop_toTopOf="@+id/valueMax" />
@@ -218,11 +218,32 @@
             android:layout_height="wrap_content"
             android:layout_marginEnd="24dp"
             android:layout_marginBottom="1dp"
-            android:max="180"
+            android:max="255"
             app:layout_constraintBottom_toBottomOf="@+id/valueMin"
             app:layout_constraintEnd_toStartOf="@+id/guideline4" />
 
+        <!-- accuracy -->
+        <TextView
+            android:id="@+id/accuracyText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Accuracy: 0"
+            app:layout_constraintBottom_toBottomOf="@+id/accuracy"
+            app:layout_constraintEnd_toStartOf="@+id/guideline3"
+            app:layout_constraintTop_toTopOf="@+id/accuracy" />
+
+        <SeekBar
+            android:id="@+id/accuracy"
+            android:layout_width="@dimen/sliderWidth"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="24dp"
+            android:layout_marginTop="16dp"
+            android:max="100"
+            android:layout_marginBottom="100dp"
+            app:layout_constraintEnd_toStartOf="@+id/hueMax"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toStartOf="@+id/guideline3"
+            app:layout_constraintTop_toBottomOf="@+id/valueMin" />
+
     </androidx.constraintlayout.widget.ConstraintLayout>
-
-
 </ScrollView>

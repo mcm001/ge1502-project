@@ -11,7 +11,6 @@ import org.opencv.core.Mat;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
-import org.photonvision.common.util.numbers.IntegerCouple;
 import org.photonvision.vision.frame.Frame;
 import org.photonvision.vision.frame.FrameDivisor;
 import org.photonvision.vision.frame.FrameStaticProperties;
@@ -57,6 +56,8 @@ public class VisionProcessThread implements Runnable {
 //        mDetector.setThresholdParams(9,9);
 //        mDetector.setThresholdMethod(MarkerDetector.thresSuppMethod.CANNY);
 
+        // Some sane defaults
+        coloredShapePipe.getSettings().accuracyPercentage = 20;
     }
 
     public void setInput(Mat frame) {
@@ -124,11 +125,7 @@ public class VisionProcessThread implements Runnable {
     private final OutputMatPipe outputMatPipe = new OutputMatPipe();
 
     private void setParams() {
-        coloredShapePipe.getSettings().contourShape = ContourShape.Custom;
-        coloredShapePipe.getSettings().hsvHue = new IntegerCouple(10, 130);
-        coloredShapePipe.getSettings().hsvSaturation = new IntegerCouple(50, 255);
-        coloredShapePipe.getSettings().hsvValue = new IntegerCouple(50, 255);
-        coloredShapePipe.getSettings().accuracyPercentage = 20;
+        coloredShapePipe.getSettings().contourShape = ContourShape.Triangle;
         coloredShapePipe.getSettings().outputShowMultipleTargets = true;
         coloredShapePipe.getSettings().streamingFrameDivisor = FrameDivisor.NONE;
 
