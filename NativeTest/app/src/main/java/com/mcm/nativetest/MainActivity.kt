@@ -34,7 +34,13 @@ import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener2
 import org.opencv.core.CvException
 import org.opencv.core.CvType
 import org.opencv.core.Mat
+import java.io.BufferedReader
+import java.io.InputStreamReader
 import java.net.ServerSocket
+import android.system.Os.socket
+import com.android.volley.toolbox.HttpHeaderParser
+import java.util.*
+
 
 class MainActivity : AppCompatActivity(), CvCameraViewListener2, SensorEventListener {
     companion object {
@@ -56,7 +62,7 @@ class MainActivity : AppCompatActivity(), CvCameraViewListener2, SensorEventList
             if (status == SUCCESS) {
                 Log.i(TAG, "OpenCV loaded successfully")
                 colored_image_output!!.enableView()
-                colored_image_output!!.enableFpsMeter()
+//                colored_image_output!!.enableFpsMeter()
                 //                mOpenCvCameraView.setOnTouchListener(MainActivity.this);
             } else {
                 super.onManagerConnected(status)
@@ -109,9 +115,16 @@ class MainActivity : AppCompatActivity(), CvCameraViewListener2, SensorEventList
                     val inputStream = s.getInputStream()
                     val outputStream = s.getOutputStream()
 
-                    while (inputStream.available() > 0) {
-                        println(inputStream.read())
+                    val reader = BufferedReader(InputStreamReader(inputStream))
+                    
+                    var line = reader.readLine()
+                    while(line.isNotEmpty()) {
+                        println(line)
+                        line = reader.readLine()
                     }
+
+                    val httpResponse = "HTTP/1.1 200 OK\r\n\r\n${Date()}"
+                    outputStream.write(httpResponse.toByteArray(charset("UTF-8")))
                 }
             }
             serverThread.start()
