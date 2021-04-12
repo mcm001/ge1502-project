@@ -234,7 +234,7 @@
 
         <SeekBar
             android:id="@+id/accuracy"
-            android:layout_width="@dimen/sliderWidth"
+            android:layout_width="200dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="24dp"
             android:layout_marginTop="16dp"

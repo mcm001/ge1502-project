@@ -36,4 +36,15 @@ public class ExampleUnitTest {
 
         assertEquals(Math.exp(0.1) - Math.exp(0.0), y1.get(0, 0), 1e-3);
     }
+
+    @Test
+    public void testHeading() {
+        double heading = 0;
+        double xhat = 180+360;
+
+        while(heading - xhat > 180) heading -= 360;
+        while(heading - xhat < -180) heading += 360;
+
+        System.out.println(heading);
+    }
 }

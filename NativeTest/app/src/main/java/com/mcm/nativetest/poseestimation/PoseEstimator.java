@@ -89,6 +89,13 @@ public class PoseEstimator {
     private void correct(Pose2d cameraInField) {
 //        est.addVisionMeasurement(cameraInField, timeSeconds);
 //        Log.i("PoseEst", String.format("Measurement: %s", cameraInField));
+
+        // rotate our camera pose until the error is less than +-180
+        double heading = cameraInField.getRotation().getRadians();
+        double xhat = headingFilter.getXhat(0);
+        while(heading - xhat > 180) heading -= 360;
+        while(heading - xhat < -180) heading += 360;
+
         headingFilter.correct(VecBuilder.fill(0), VecBuilder.fill(cameraInField.getRotation().getRadians()));
         Log.i("HeadingEst", String.format("Heading Estimate: %s", headingFilter.getXhat(0) * 180.0 / Math.PI));
     }

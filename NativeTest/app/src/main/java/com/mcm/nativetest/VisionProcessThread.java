@@ -139,6 +139,9 @@ public class VisionProcessThread implements Runnable {
     }
 
     private void detectShapes() {
+        inmatlock.lock();
+        outmatlock.lock();
+
         Imgproc.cvtColor(mRgba, mRgba, Imgproc.COLOR_RGBA2BGR);
 //        Imgproc.line(mRgba, new Point(0, 0), new Point(1000, 1000), new Scalar(1, 1, 1), 10);
 //        Imgproc.circle(mRgba, new Point(300, 300), 100, new Scalar(0, 0, 150), Core.FILLED);
@@ -166,6 +169,9 @@ public class VisionProcessThread implements Runnable {
 
         Imgproc.cvtColor(mRgba, mRgba, Imgproc.COLOR_BGR2RGBA);
         Imgproc.cvtColor(colorOutput, colorOutput, Imgproc.COLOR_BGR2RGB);
+
+        inmatlock.unlock();
+        outmatlock.unlock();
     }
 
     private void detectMarkers() {
