@@ -80,18 +80,17 @@
 
         <org.opencv.android.JavaCameraView
             android:id="@+id/colored_image_output"
-            android:layout_width="300dp"
-            android:layout_height="200dp"
+            android:layout_width="1280px"
+            android:layout_height="960px"
             android:layout_marginBottom="20dp"
             app:layout_constraintBottom_toTopOf="@+id/hueMin"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/guideline2" />
+            app:layout_constraintTop_toTopOf="@+id/threshold_image_output" />
 
         <ImageView
             android:id="@+id/threshold_image_output"
-            android:layout_width="300dp"
-            android:layout_height="200dp"
-            app:layout_constraintBottom_toBottomOf="@+id/colored_image_output"
+            android:layout_width="1280px"
+            android:layout_height="960px"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="@+id/guideline2"
             android:contentDescription="TODO" />

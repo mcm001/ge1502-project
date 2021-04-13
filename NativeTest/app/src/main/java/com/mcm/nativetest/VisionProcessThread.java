@@ -38,7 +38,7 @@ public class VisionProcessThread implements Runnable {
     private long inTime = 0;
     public boolean exit = false;
     private final CameraParameters cameraParameters;
-    private final Vector<Marker> detectedMarkers;
+    public final Vector<Marker> detectedMarkers;
     private final Lock markerLock = new ReentrantLock(false);
     private final Lock outmatlock = new ReentrantLock(true);
     private final MarkerDetector mDetector;
@@ -211,12 +211,12 @@ public class VisionProcessThread implements Runnable {
     private void processMarkers(List<Marker> markers) {
         // So right now the best we can do is nothing
         // Love to see it
-        double now = System.currentTimeMillis() / 1000.0;
-        estimator.predict(now, ax, ay, omega);
+        long now = System.currentTimeMillis();
+        estimator.predict(now, omega);
 
-//        if (!markers.isEmpty()) {
-//            estimator.correct(markers);
-//        }
+        if (!markers.isEmpty()) {
+            estimator.correct(markers);
+        }
     }
 
     public ColoredShapePipelineSettings getColoredShapeSettings() {

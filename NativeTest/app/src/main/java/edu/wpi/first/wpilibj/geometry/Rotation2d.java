@@ -176,7 +176,7 @@ public class Rotation2d {
 
   @Override
   public String toString() {
-    return String.format("Rotation2d(Rads: %.2f, Deg: %.2f)", m_value, Math.toDegrees(m_value));
+    return String.format("{Rads: %.2f, Deg: %.2f}", m_value, Math.toDegrees(m_value));
   }
 
   /**

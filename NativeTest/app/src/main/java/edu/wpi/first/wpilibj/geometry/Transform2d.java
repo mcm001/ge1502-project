@@ -108,7 +108,7 @@ public class Transform2d {
 
   @Override
   public String toString() {
-    return String.format("Transform2d(%s, %s)", m_translation, m_rotation);
+    return String.format("{%s, %s}", m_translation, m_rotation);
   }
 
   /**

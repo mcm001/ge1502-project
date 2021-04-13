@@ -37,8 +37,6 @@ import org.opencv.core.Mat
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.net.ServerSocket
-import android.system.Os.socket
-import com.android.volley.toolbox.HttpHeaderParser
 import java.util.*
 
 
@@ -92,6 +90,8 @@ class MainActivity : AppCompatActivity(), CvCameraViewListener2, SensorEventList
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         setContentView(R.layout.activity_main)
         colored_image_output.setMaxFrameSize(1280, 960)
+        colored_image_output.layoutParams.width = 1280;
+        colored_image_output.layoutParams.height = 960;
         colored_image_output.visibility = SurfaceView.VISIBLE
         //        mOpenCvCameraView.setCameraIndex(CameraBridgeViewBase.CAMERA_ID_FRONT);
         colored_image_output.setCameraIndex(CameraBridgeViewBase.CAMERA_ID_BACK)
@@ -123,10 +123,13 @@ class MainActivity : AppCompatActivity(), CvCameraViewListener2, SensorEventList
 //                        line = reader.readLine()
 //                    }
                     val line = reader.readLine()
-                    if(line.contains("/driveForward", true)) {
+                    if (line.contains("/driveForward", true)) {
                         println("DRIVING FORWARD")
-                    } else if(line.contains("/stop", true)) {
+                    } else if (line.contains("/stop", true)) {
                         println("STOPPING")
+                    } else if (line.contains("/reset", true)) {
+                        println("RESETTING")
+                        visionProcess?.estimator?.reset()
                     }
 
                     try {
@@ -282,8 +285,8 @@ class MainActivity : AppCompatActivity(), CvCameraViewListener2, SensorEventList
 //            Log.d("Sensor", "Ax $x Ay $y")
         }
         textView!!.text =
-            "Angle: " + (visionProcess!!.estimator.heading.degrees).toInt()
-//            visionProcess?.estimator?.poseEstimate.toString()
+//            "Angle: " + (visionProcess!!.estimator.heading.degrees).toInt()
+            visionProcess?.estimator?.pose?.toString()
 
         //        fpsTextView.setText(fps);
     }
