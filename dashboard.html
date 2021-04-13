@@ -2,6 +2,7 @@
 <button type="button" id="go">Go nyoom</button>
 <button type="button" id="stop">Stop</button>
 <button type="button" id="reset">Reset Heading</button>
+<button type="button" id="music">Win</button>
 
 <script>
     document.getElementById("go").onclick = e => {
@@ -16,9 +17,9 @@
         xhr.setRequestHeader('Content-Type', 'application/json');
         xhr.send();
     }
-    document.getElementById("reset").onclick = e => {
+    document.getElementById("music").onclick = e => {
         var xhr = new XMLHttpRequest();
-        xhr.open("POST", "http://v35-thinq.mshome.net:9876/reset", true);
+        xhr.open("POST", "http://v35-thinq.mshome.net:9876/music", true);
         xhr.setRequestHeader('Content-Type', 'application/json');
         xhr.send();
     }

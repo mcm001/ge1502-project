@@ -9,6 +9,7 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.SurfaceView
@@ -130,6 +131,10 @@ class MainActivity : AppCompatActivity(), CvCameraViewListener2, SensorEventList
                     } else if (line.contains("/reset", true)) {
                         println("RESETTING")
                         visionProcess?.estimator?.reset()
+                    } else if (line.contains("/music", true)) {
+                        println("MUSIC")
+                        val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.youtube.com/watch?v=dQw4w9WgXcQ"))
+                        startActivity(browserIntent)
                     }
 
                     try {
