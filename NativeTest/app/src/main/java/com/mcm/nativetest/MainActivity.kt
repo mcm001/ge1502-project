@@ -197,7 +197,8 @@ class MainActivity : AppCompatActivity(), CvCameraViewListener2, SensorEventList
 //        fpsTextView.setBackgroundColor(Color.WHITE)
         queue = Volley.newRequestQueue(this)
         hsvListener = HSVListener(this)
-        controller = Controller { sendData("${it.leftMetersPerSecond}, ${it.rightMetersPerSecond}\n") }
+        controller =
+            Controller({ sendData("${-it.rightMetersPerSecond}, ${-it.leftMetersPerSecond}\n") }) { visionProcess?.estimator?.pose }
 
         serialLog.movementMethod = ScrollingMovementMethod()
         serialLog.text = ""
@@ -229,20 +230,26 @@ class MainActivity : AppCompatActivity(), CvCameraViewListener2, SensorEventList
 //                        line = reader.readLine()
 //                    }
                     val line = reader.readLine()
-                    if (line.contains("/driveForward", true)) {
-                        println("DRIVING FORWARD")
-                        controller.currentState = Controller.State.Power(0.2, 0.2)
-                    } else if (line.contains("/stop", true)) {
-                        println("STOPPING")
-                        controller.currentState = Controller.State.Nothing
-                    } else if (line.contains("/reset", true)) {
-                        println("RESETTING")
-                        visionProcess?.estimator?.reset()
-                    } else if (line.contains("/music", true)) {
-                        println("MUSIC")
-                        val browserIntent =
-                            Intent(Intent.ACTION_VIEW, Uri.parse("https://www.youtube.com/watch?v=dQw4w9WgXcQ"))
-                        startActivity(browserIntent)
+                    when {
+                        line.contains("/driveForward", true) -> {
+                            println("DRIVING FORWARD")
+//                            controller.currentState = Controller.State.Power(0.8, 0.0)
+                            controller.turnToFace(Pose2d())
+                        }
+                        line.contains("/stop", true) -> {
+                            println("STOPPING")
+                            controller.currentState = Controller.State.Nothing
+                        }
+                        line.contains("/reset", true) -> {
+                            println("RESETTING")
+                            visionProcess?.estimator?.reset()
+                        }
+                        line.contains("/music", true) -> {
+                            println("MUSIC")
+                            val browserIntent =
+                                Intent(Intent.ACTION_VIEW, Uri.parse("https://www.youtube.com/watch?v=dQw4w9WgXcQ"))
+                            startActivity(browserIntent)
+                        }
                     }
 
                     try {

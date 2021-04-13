@@ -20,7 +20,6 @@ public class PoseEstimator {
 
     long lastUpdateTime = -1;
 
-    public Rotation2d heading = new Rotation2d();
     private Pose2d cameraPose = new Pose2d();
 
     // For heading we'll do a kalman filter
@@ -99,7 +98,6 @@ public class PoseEstimator {
     }
 
     public void reset() {
-        heading = new Rotation2d();
         headingFilter.reset();
         Log.i("PoseEstimator", "Pose reset!");
     }
