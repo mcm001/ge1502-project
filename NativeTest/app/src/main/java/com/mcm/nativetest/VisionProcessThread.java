@@ -214,9 +214,9 @@ public class VisionProcessThread implements Runnable {
         double now = System.currentTimeMillis() / 1000.0;
         estimator.predict(now, ax, ay, omega);
 
-        if (!markers.isEmpty()) {
-            estimator.correct(markers);
-        }
+//        if (!markers.isEmpty()) {
+//            estimator.correct(markers);
+//        }
     }
 
     public ColoredShapePipelineSettings getColoredShapeSettings() {

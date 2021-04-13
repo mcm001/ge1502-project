@@ -282,8 +282,8 @@ class MainActivity : AppCompatActivity(), CvCameraViewListener2, SensorEventList
 //            Log.d("Sensor", "Ax $x Ay $y")
         }
         textView!!.text =
-//            "Angle: " + (visionProcess!!.estimator.headingFilter.getXhat(0) * 180.0 / Math.PI).toInt()
-            visionProcess?.estimator?.poseEstimate.toString()
+            "Angle: " + (visionProcess!!.estimator.heading.degrees).toInt()
+//            visionProcess?.estimator?.poseEstimate.toString()
 
         //        fpsTextView.setText(fps);
     }
