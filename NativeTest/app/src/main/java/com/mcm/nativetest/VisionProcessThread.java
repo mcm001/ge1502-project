@@ -103,6 +103,10 @@ public class VisionProcessThread implements Runnable {
                 continue;
             }
 
+            // Predict at the start
+            long now = System.currentTimeMillis();
+            estimator.predict(now, omega);
+
             // These internally mutate mRgba
             setParams();
             detectMarkers();
@@ -147,6 +151,8 @@ public class VisionProcessThread implements Runnable {
     private void detectShapes() {
         inmatlock.lock();
         outmatlock.lock();
+
+        colorOutput.release();
 
         Imgproc.cvtColor(mRgba, mRgba, Imgproc.COLOR_RGBA2BGR);
 //        Imgproc.line(mRgba, new Point(0, 0), new Point(1000, 1000), new Scalar(1, 1, 1), 10);
@@ -200,6 +206,10 @@ public class VisionProcessThread implements Runnable {
                 m.draw3dAxis(mRgba, cameraParameters, new Scalar(0, 255, 0));
                 m.draw3dCube(mRgba, cameraParameters, new Scalar(0, 255, 0));
                 m.draw(mRgba, new Scalar(255, 0, 0), 2, true);
+
+                m.draw3dAxis(colorOutput, cameraParameters, new Scalar(0, 255, 0));
+                m.draw3dCube(colorOutput, cameraParameters, new Scalar(0, 255, 0));
+                m.draw(colorOutput, new Scalar(255, 0, 0), 2, true);
             }
             detectedMarkers.forEach(Marker::release);
             markerLock.unlock();
@@ -209,10 +219,6 @@ public class VisionProcessThread implements Runnable {
     }
 
     private void processMarkers(List<Marker> markers) {
-        // So right now the best we can do is nothing
-        // Love to see it
-        long now = System.currentTimeMillis();
-        estimator.predict(now, omega);
 
         if (!markers.isEmpty()) {
             estimator.correct(markers);

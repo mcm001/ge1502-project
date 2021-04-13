@@ -35,7 +35,7 @@ public class PoseEstimator {
                     Nat.N1(),
                     (x, u) -> u,
                     (x, u) -> x,
-                    VecBuilder.fill(0.1),
+                    VecBuilder.fill(0.05),
                     VecBuilder.fill(0.2),
                     AngleStatistics.angleMean(0),
                     AngleStatistics.angleMean(0),
@@ -75,7 +75,6 @@ public class PoseEstimator {
 
         System.out.println(cameraInField);
 //        Log.i("HeadingEst", String.format("Heading Estimate: %s", headingFilter.getXhat(0) * 180.0 / Math.PI));
-
     }
 
     public void correct(List<Marker> markers) {

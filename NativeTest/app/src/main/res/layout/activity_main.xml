@@ -51,8 +51,8 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="32dp"
             android:layout_weight="1"
-            android:onClick="connectPi"
-            android:text="Connect To Pi"
+            android:onClick="tryConnectUsb"
+            android:text="Connect USB"
             app:layout_constraintBottom_toTopOf="@+id/guideline2"
             app:layout_constraintStart_toStartOf="parent" />
 

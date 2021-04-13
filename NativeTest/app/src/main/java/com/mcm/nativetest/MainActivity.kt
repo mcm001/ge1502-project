@@ -32,6 +32,10 @@ import com.android.volley.toolbox.Volley
 import edu.wpi.first.wpilibj.geometry.Pose2d
 import edu.wpi.first.wpilibj.util.Units
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.yield
 import org.opencv.android.*
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewFrame
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener2
@@ -42,6 +46,7 @@ import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.lang.ref.WeakReference
 import java.net.ServerSocket
+import java.nio.charset.StandardCharsets
 import java.util.*
 
 
@@ -55,9 +60,11 @@ class MainActivity : AppCompatActivity(), CvCameraViewListener2, SensorEventList
         }
     }
 
+    private lateinit var controllerTask: Job
+
     /*
-     * Notifications from UsbService will be received here.
-     */
+         * Notifications from UsbService will be received here.
+         */
     private val mUsbReceiver: BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             when (intent.action) {
@@ -113,6 +120,14 @@ class MainActivity : AppCompatActivity(), CvCameraViewListener2, SensorEventList
         serialLog.text = lines.joinToString("\n")
     }
 
+    private fun sendData(data: String) {
+        val bytes = data.toByteArray(charset = StandardCharsets.US_ASCII)
+        val success = usbService?.write(bytes)
+//        if(success == true) {
+//            addRx("TX: $data")
+//        }
+    }
+
     var usbService: UsbService? = null
     private var mHandler: MyHandler? = null
     private val usbConnection: ServiceConnection = object : ServiceConnection {
@@ -148,7 +163,7 @@ class MainActivity : AppCompatActivity(), CvCameraViewListener2, SensorEventList
     var visionProcess: VisionProcessThread? = null
         private set
     private var processThread: Thread? = null
-    private lateinit var mRgba: Mat
+    private var mRgba: Mat? = null
     private lateinit var mColorOutput: Mat
 
     var queue: RequestQueue? = null
@@ -157,6 +172,7 @@ class MainActivity : AppCompatActivity(), CvCameraViewListener2, SensorEventList
     var gyro: Sensor? = null
 
     private lateinit var hsvListener: HSVListener
+    private lateinit var controller: Controller
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -169,8 +185,8 @@ class MainActivity : AppCompatActivity(), CvCameraViewListener2, SensorEventList
         colored_image_output.layoutParams.width = 1280;
         colored_image_output.layoutParams.height = 960;
         colored_image_output.visibility = SurfaceView.VISIBLE
-        //        mOpenCvCameraView.setCameraIndex(CameraBridgeViewBase.CAMERA_ID_FRONT);
-        colored_image_output.setCameraIndex(CameraBridgeViewBase.CAMERA_ID_BACK)
+        colored_image_output.setCameraIndex(CameraBridgeViewBase.CAMERA_ID_FRONT);
+//        colored_image_output.setCameraIndex(CameraBridgeViewBase.CAMERA_ID_BACK)
         colored_image_output.setCvCameraViewListener(this)
         thresholdOutput = findViewById(R.id.threshold_image_output)
         sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
@@ -181,11 +197,17 @@ class MainActivity : AppCompatActivity(), CvCameraViewListener2, SensorEventList
 //        fpsTextView.setBackgroundColor(Color.WHITE)
         queue = Volley.newRequestQueue(this)
         hsvListener = HSVListener(this)
+        controller = Controller { sendData("${it.leftMetersPerSecond}, ${it.rightMetersPerSecond}\n") }
 
         serialLog.movementMethod = ScrollingMovementMethod()
         serialLog.text = ""
 
         startServer()
+        controllerTask = GlobalScope.launch {
+            while (true) {
+                controller.update(); yield()
+            }
+        }
     }
 
     lateinit var serverThread: Thread
@@ -209,14 +231,17 @@ class MainActivity : AppCompatActivity(), CvCameraViewListener2, SensorEventList
                     val line = reader.readLine()
                     if (line.contains("/driveForward", true)) {
                         println("DRIVING FORWARD")
+                        controller.currentState = Controller.State.Power(0.2, 0.2)
                     } else if (line.contains("/stop", true)) {
                         println("STOPPING")
+                        controller.currentState = Controller.State.Nothing
                     } else if (line.contains("/reset", true)) {
                         println("RESETTING")
                         visionProcess?.estimator?.reset()
                     } else if (line.contains("/music", true)) {
                         println("MUSIC")
-                        val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.youtube.com/watch?v=dQw4w9WgXcQ"))
+                        val browserIntent =
+                            Intent(Intent.ACTION_VIEW, Uri.parse("https://www.youtube.com/watch?v=dQw4w9WgXcQ"))
                         startActivity(browserIntent)
                     }
 
@@ -339,17 +364,17 @@ class MainActivity : AppCompatActivity(), CvCameraViewListener2, SensorEventList
     }
 
     override fun onCameraViewStarted(width: Int, height: Int) {
-        mRgba = Mat(height, width, CvType.CV_8UC4)
         mColorOutput = Mat(height, width, CvType.CV_8UC3)
     }
 
     override fun onCameraViewStopped() {
-        mRgba!!.release()
+        mRgba?.release()
     }
 
     var lastTime = System.currentTimeMillis()
     var fps = "FPS: "
-    override fun onCameraFrame(inputFrame: CvCameraViewFrame): Mat {
+    override fun onCameraFrame(inputFrame: CvCameraViewFrame): Mat? {
+        mRgba?.release()
         mRgba = inputFrame.rgba()
         visionProcess!!.setInput(mRgba)
         visionProcess!!.getThresholdOutput(mRgba)
@@ -363,7 +388,7 @@ class MainActivity : AppCompatActivity(), CvCameraViewListener2, SensorEventList
         try {
             val bmp = Bitmap.createBitmap(mColorOutput.cols(), mColorOutput.rows(), Bitmap.Config.ARGB_8888)
             Utils.matToBitmap(mColorOutput, bmp)
-            runOnUiThread { thresholdOutput!!.setImageBitmap(bmp) }
+            runOnUiThread { thresholdOutput.setImageBitmap(bmp) }
         } catch (e: CvException) {
             Log.d("Exception", e.message!!)
         }
@@ -400,5 +425,9 @@ class MainActivity : AppCompatActivity(), CvCameraViewListener2, SensorEventList
 
     override fun onAccuracyChanged(sensor: Sensor, accuracy: Int) {
         // Ignored
+    }
+
+    fun tryConnectUsb(view: View) {
+        usbService?.findSerialPortDevice()
     }
 }

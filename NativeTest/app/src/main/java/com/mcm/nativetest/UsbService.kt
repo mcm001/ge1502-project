@@ -136,11 +136,11 @@ class UsbService : Service() {
         this.mHandler = mHandler
     }
 
-    private fun findSerialPortDevice() {
+    fun findSerialPortDevice() {
         // This snippet will try to open the first encountered usb device connected, excluding usb root hubs
         Toast.makeText(this, "Finding usb....", Toast.LENGTH_SHORT).show()
         val usbDevices = usbManager!!.deviceList
-        if (!usbDevices.isEmpty()) {
+        if (usbDevices.isNotEmpty()) {
 
             // first, dump the hashmap for diagnostic purposes
             for ((_, value) in usbDevices) {

@@ -3,6 +3,7 @@ package aruco;
 import org.opencv.core.*;
 import org.opencv.imgproc.Imgproc;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Vector;
@@ -25,7 +26,7 @@ public class MarkerDetector {
     private final Mat thres;
     private final Mat thres2;
     private final Mat hierarchy2;
-    private final Vector<MatOfPoint> contours2;
+    private List<MatOfPoint> contours2;
 
     public MarkerDetector() {
         thresParam1 = thresParam2 = 7;
@@ -35,7 +36,7 @@ public class MarkerDetector {
         thres = new Mat();
         thres2 = new Mat();
         hierarchy2 = new Mat();
-        contours2 = new Vector<MatOfPoint>();
+        contours2 = new ArrayList<>();
     }
 
     /**
@@ -46,10 +47,16 @@ public class MarkerDetector {
      * @param markerSizeMeters --
      */
 
+    MatOfPoint2f contour = new MatOfPoint2f();
+    MatOfPoint2f approxCurve = new MatOfPoint2f();
+    MatOfPoint mat = new MatOfPoint();
+
     // @param camMatrix --
     // @param distCoeff --
     public void detect(Mat in, Vector<Marker> detectedMarkers, CameraParameters cp, float markerSizeMeters) {
+        for(MatOfPoint p: contours2) p.release();
         contours2.clear();
+        contours2 = new ArrayList<>();
         Vector<Marker> candidateMarkers = new Vector<Marker>();
         // the detection in the incoming frame will be done in a different vector
         // because this will allow the ontouchlistener in View
@@ -61,16 +68,15 @@ public class MarkerDetector {
         thresHold(thresMethod, grey, thres);
 
         // pass a copy because it modifies the src image
+        thres2.release();
         thres.copyTo(thres2);
         Imgproc.findContours(thres2, contours2, hierarchy2, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_NONE);
 
         // uncomment the following line if you want the contours drawn
 //        Imgproc.drawContours(frameDebug, contours2, -1, new Scalar(255,0,0),2);
         // to each contour analyze if it is a paralelepiped likely to be a marker
-        MatOfPoint2f approxCurve = new MatOfPoint2f();
 //		List<Point> approxPoints = new ArrayList<Point>();
         for (int i = 0; i < contours2.size(); i++) {
-            MatOfPoint2f contour = new MatOfPoint2f();
             contours2.get(i).convertTo(contour, CvType.CV_32FC2);
             // first check if it has enough points
             int contourSize = (int) contour.total();
@@ -80,7 +86,6 @@ public class MarkerDetector {
                 // check the polygon has 4 points
                 if (approxCurve.total() == 4) {
                     // and if it is convex
-                    MatOfPoint mat = new MatOfPoint();
                     approxCurve.convertTo(mat, CvType.CV_32SC2);
                     if (Imgproc.isContourConvex(mat)) {
                         // ensure the distance between consecutive points is large enough
