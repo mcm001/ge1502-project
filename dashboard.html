@@ -1,15 +1,18 @@
 <span>Hello</span>
 <button type="button" id="go">Go nyoom</button>
+<button type="button" id="stop">Stop</button>
 
 <script>
     document.getElementById("go").onclick = e => {
-        // console.log(e)
-
         var xhr = new XMLHttpRequest();
-        xhr.open("POST", "http://v35-thinq.mshome.net/9876/go", true);
+        xhr.open("POST", "http://v35-thinq.mshome.net:9876/driveForward", true);
         xhr.setRequestHeader('Content-Type', 'application/json');
-        xhr.send(JSON.stringify({
-            test: 254
-        }));
+        xhr.send();
+    }
+    document.getElementById("stop").onclick = e => {
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", "http://v35-thinq.mshome.net:9876/stop", true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.send();
     }
 </script>

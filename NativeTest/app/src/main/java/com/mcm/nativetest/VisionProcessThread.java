@@ -113,6 +113,12 @@ public class VisionProcessThread implements Runnable {
             mRgba.copyTo(output);
             mRgba.release();
             outmatlock.unlock();
+
+//            try {
+//                Thread.sleep(200);
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();
+//            }
         }
     }
 
@@ -206,7 +212,7 @@ public class VisionProcessThread implements Runnable {
         // So right now the best we can do is nothing
         // Love to see it
         double now = System.currentTimeMillis() / 1000.0;
-        estimator.update(now, ax, ay, omega);
+        estimator.predict(now, ax, ay, omega);
 
         if (!markers.isEmpty()) {
             estimator.correct(markers);
@@ -220,5 +226,4 @@ public class VisionProcessThread implements Runnable {
     public void setSettings(ColoredShapePipelineSettings settings) {
         coloredShapePipe.setSettings(settings);
     }
-
 }

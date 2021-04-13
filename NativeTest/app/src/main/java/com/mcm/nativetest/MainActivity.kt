@@ -116,15 +116,27 @@ class MainActivity : AppCompatActivity(), CvCameraViewListener2, SensorEventList
                     val outputStream = s.getOutputStream()
 
                     val reader = BufferedReader(InputStreamReader(inputStream))
-                    
-                    var line = reader.readLine()
-                    while(line.isNotEmpty()) {
-                        println(line)
-                        line = reader.readLine()
+
+//                    var line = reader.readLine()
+//                    while(line.isNotEmpty()) {
+//                        println(line)
+//                        line = reader.readLine()
+//                    }
+                    val line = reader.readLine()
+                    if(line.contains("/driveForward", true)) {
+                        println("DRIVING FORWARD")
+                    } else if(line.contains("/stop", true)) {
+                        println("STOPPING")
                     }
 
-                    val httpResponse = "HTTP/1.1 200 OK\r\n\r\n${Date()}"
-                    outputStream.write(httpResponse.toByteArray(charset("UTF-8")))
+                    try {
+                        val httpResponse = "HTTP/1.1 200 OK\r\n\r\n${Date()}"
+                        outputStream.write(httpResponse.toByteArray(charset("UTF-8")))
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+
+                    outputStream.close()
                 }
             }
             serverThread.start()
@@ -270,7 +282,9 @@ class MainActivity : AppCompatActivity(), CvCameraViewListener2, SensorEventList
 //            Log.d("Sensor", "Ax $x Ay $y")
         }
         textView!!.text =
-            "Angle: " + (visionProcess!!.estimator.headingFilter.getXhat(0) * 180.0 / Math.PI).toInt()
+//            "Angle: " + (visionProcess!!.estimator.headingFilter.getXhat(0) * 180.0 / Math.PI).toInt()
+            visionProcess?.estimator?.poseEstimate.toString()
+
         //        fpsTextView.setText(fps);
     }
 

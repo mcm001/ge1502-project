@@ -74,6 +74,7 @@ public class CameraCalibrationActivity extends Activity implements CvCameraViewL
         mOpenCvCameraView = findViewById(R.id.camera_calibration_java_surface_view);
         mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
         mOpenCvCameraView.setMaxFrameSize(1280, 960);
+        mOpenCvCameraView.setCameraIndex(CameraBridgeViewBase.CAMERA_ID_BACK);
         mOpenCvCameraView.setCvCameraViewListener(this);
     }
 
