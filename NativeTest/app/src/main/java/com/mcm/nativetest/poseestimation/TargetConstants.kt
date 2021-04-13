@@ -17,9 +17,9 @@ object TargetConstants {
     }
 
     private val targetMap = hashMapOf(
-        1 to Pose2d(0.0, 0.06, 0.degrees),
-        2 to Pose2d(0.0, -0.06, 0.degrees),
-        3 to Pose2d((-100).inches, -0.06, 180.degrees),
-        4 to Pose2d((-100).inches, -0.06, 180.degrees)
+        3 to Pose2d(0.0, 0.06, 0.degrees),
+//        2 to Pose2d(0.0, -0.06, 0.degrees),
+        1 to Pose2d((-100).inches, -0.06, 180.degrees),
+//        4 to Pose2d((-100).inches, -0.06, 180.degrees)
     )
 }

@@ -28,6 +28,6 @@
         </activity>
 
         <activity android:name="cameracalibration.CameraCalibrationActivity"/>
+        <service android:name="com.mcm.nativetest.UsbService" android:enabled="true"/>
     </application>
-
 </manifest>

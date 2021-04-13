@@ -115,7 +115,7 @@ public class VisionProcessThread implements Runnable {
             outmatlock.unlock();
 
 //            try {
-//                Thread.sleep(200);
+//                Thread.sleep(0);
 //            } catch (InterruptedException e) {
 //                e.printStackTrace();
 //            }
