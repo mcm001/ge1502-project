@@ -19,13 +19,15 @@ import org.photonvision.vision.pipe.impl.Draw2dCrosshairPipe;
 import org.photonvision.vision.pipe.impl.Draw2dTargetsPipe;
 import org.photonvision.vision.pipe.impl.OutputMatPipe;
 import org.photonvision.vision.pipe.impl.ResizeImagePipe;
-import org.photonvision.vision.pipeline.ColoredShapePipeline;
-import org.photonvision.vision.pipeline.ColoredShapePipelineSettings;
+import org.photonvision.vision.pipeline.ReflectivePipeline;
+import org.photonvision.vision.pipeline.ReflectivePipelineSettings;
 import org.photonvision.vision.pipeline.result.CVPipelineResult;
 import org.photonvision.vision.target.TrackedTarget;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Vector;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -35,7 +37,6 @@ public class VisionProcessThread implements Runnable {
     private Mat output;
     private Mat colorOutput = new Mat();
     private long inTime = 0;
-    public boolean exit = false;
     private final CameraParameters cameraParameters;
     public final Vector<Marker> detectedMarkers;
     private final Lock markerLock = new ReentrantLock(false);
@@ -44,8 +45,9 @@ public class VisionProcessThread implements Runnable {
 
     public final PoseEstimator estimator = new PoseEstimator();
     public double ax, ay, omega;
-    private List<TrackedTarget> result;
-    private Lock resultLock = new ReentrantLock();
+    private List<TrackedTarget> result = Collections.emptyList();
+    private final Object resultLock = new Object();
+    private AtomicBoolean hasTargets = new AtomicBoolean();
 
     public VisionProcessThread(CameraParameters cp) {
         cameraParameters = cp;
@@ -97,37 +99,35 @@ public class VisionProcessThread implements Runnable {
 
     @Override
     public void run() {
-        while (!exit) {
-            inmatlock.lock();
-            input.copyTo(mRgba);
-            inmatlock.unlock();
-            if (mRgba.empty()) {
-                continue;
-            }
+        inmatlock.lock();
+        input.copyTo(mRgba);
+        inmatlock.unlock();
+        if (mRgba.empty()) {
+            return;
+        }
 
-            // Predict at the start
-            long now = System.currentTimeMillis();
-            estimator.predict(now, omega);
+        // Predict at the start
+        long now = System.currentTimeMillis();
+        estimator.predict(now, omega);
 
-            // These internally mutate mRgba
-            detectMarkers();
-            detectShapes();
-            drawMarkers();
+        // These internally mutate mRgba
+        detectMarkers();
+        detectShapes();
+        drawMarkers();
 
-            outmatlock.lock();
-            mRgba.copyTo(output);
-            mRgba.release();
-            outmatlock.unlock();
+        outmatlock.lock();
+        mRgba.copyTo(output);
+        mRgba.release();
+        outmatlock.unlock();
 
-            try {
-                Thread.sleep(200);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
 
-    ColoredShapePipeline visionPipeline = new ColoredShapePipeline();
+    ReflectivePipeline visionPipeline = new ReflectivePipeline();
     FrameStaticProperties props;
 
     private final Draw2dTargetsPipe draw2dTargetsPipe = new Draw2dTargetsPipe();
@@ -136,12 +136,11 @@ public class VisionProcessThread implements Runnable {
     private final OutputMatPipe outputMatPipe = new OutputMatPipe();
 
     private void setParams() {
-        visionPipeline.getSettings().outputShowMultipleTargets = true;
-        visionPipeline.getSettings().streamingFrameDivisor = FrameDivisor.NONE;
+        ReflectivePipelineSettings settings = visionPipeline.getSettings();
+        settings.outputShowMultipleTargets = true;
+        settings.streamingFrameDivisor = FrameDivisor.NONE;
 
-        ColoredShapePipelineSettings settings = visionPipeline.getSettings();
-
-        props = new FrameStaticProperties(mRgba.width(), mRgba.height(), 90, Rotation2d.fromDegrees(0), null);
+        props = new FrameStaticProperties(1280, 960, 90, Rotation2d.fromDegrees(0), null);
         resizeImagePipe.setParams(new ResizeImagePipe.ResizeImageParams(settings.streamingFrameDivisor));
         draw2dTargetsPipe.setParams(new Draw2dTargetsPipe.Draw2dTargetsParams(true, true, settings.streamingFrameDivisor));
         draw2dCrosshairPipe.setParams(new Draw2dCrosshairPipe.Draw2dCrosshairParams(props, settings.streamingFrameDivisor));
@@ -182,12 +181,12 @@ public class VisionProcessThread implements Runnable {
         Imgproc.cvtColor(mRgba, mRgba, Imgproc.COLOR_BGR2RGBA);
         Imgproc.cvtColor(colorOutput, colorOutput, Imgproc.COLOR_BGR2RGB);
 
-        resultLock.lock();
-//        if (this.result != null)
-//            this.result.forEach(TrackedTarget::release);
-        this.result = null;
-        this.result = result.targets;
-        resultLock.unlock();
+        synchronized (resultLock) {
+            if (this.result != null)
+                this.result.forEach(TrackedTarget::release);
+            this.result = result.targets;
+            hasTargets.set(result.hasTargets());
+        }
 
         inmatlock.unlock();
         outmatlock.unlock();
@@ -232,19 +231,15 @@ public class VisionProcessThread implements Runnable {
         }
     }
 
-    public ColoredShapePipelineSettings getPipelineSettings() {
+    public ReflectivePipelineSettings getPipelineSettings() {
         return visionPipeline.getSettings();
     }
 
-    public void setSettings(ColoredShapePipelineSettings settings) {
+    public void setSettings(ReflectivePipelineSettings settings) {
         visionPipeline.setSettings(settings);
     }
 
     public boolean hasTargets() {
-        resultLock.lock();
-        List<TrackedTarget> targets = this.result;
-        boolean hasTargets = !targets.isEmpty();
-        resultLock.unlock();
-        return hasTargets;
+        return hasTargets.get();
     }
 }

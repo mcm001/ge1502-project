@@ -31,7 +31,7 @@ import org.photonvision.vision.opencv.DualOffsetValues;
 import java.util.HashMap;
 import java.util.List;
 
-public class TrackedTarget implements Releasable {
+public class TrackedTarget implements Releasable, AutoCloseable {
     public final Contour m_mainContour;
     List<Contour> m_subContours; // can be empty
 
@@ -207,6 +207,11 @@ public class TrackedTarget implements Releasable {
 
     public void setId(int markerId) {
         this.markerId = markerId;
+    }
+
+    @Override
+    public void close() throws Exception {
+        release();
     }
 
     public static class TargetCalculationParameters {

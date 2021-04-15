@@ -8,6 +8,7 @@ import org.photonvision.common.util.numbers.IntegerCouple
 import org.photonvision.common.util.numbers.NumberCouple
 import org.photonvision.vision.opencv.ContourShape
 import org.photonvision.vision.pipeline.ColoredShapePipelineSettings
+import org.photonvision.vision.pipeline.ReflectivePipelineSettings
 
 class HSVListener(private var mainActivity: MainActivity) : OnSeekBarChangeListener {
     private var hueMinText: TextView = mainActivity.findViewById(R.id.hueMinText)
@@ -45,18 +46,18 @@ class HSVListener(private var mainActivity: MainActivity) : OnSeekBarChangeListe
         val thread = mainActivity.visionProcess
         val settings = thread?.pipelineSettings
         if (settings != null) {
-            settings.accuracyPercentage = 75.0
-            settings.circleAccuracy = 12
             settings.hsvHue = IntegerCouple(64, 170)
             settings.hsvSaturation = IntegerCouple(199, 255)
             settings.hsvValue = IntegerCouple(179, 255)
             settings.contourArea = DoubleCouple(1.0 / 100.0, 100)
-            settings.contourShape = ContourShape.Circle
+//            settings.contourShape = ContourShape.Circle
+//            settings.accuracyPercentage = 75.0
+//            settings.circleAccuracy = 12
+//            accuracy.progress = settings.accuracyPercentage.toInt()
 
             setCouple(hueMin, hueMax, settings.hsvHue)
             setCouple(satMin, satMax, settings.hsvSaturation)
             setCouple(valueMin, valueMax, settings.hsvValue)
-            accuracy.progress = settings.accuracyPercentage.toInt()
 
             updateText(settings)
         }
@@ -71,18 +72,18 @@ class HSVListener(private var mainActivity: MainActivity) : OnSeekBarChangeListe
         val thread: VisionProcessThread = mainActivity.visionProcess ?: return
         if (!fromUser) return
 
-        val settings = thread.pipelineSettings
+        val settings: ReflectivePipelineSettings = thread.pipelineSettings ?: return
         updateSettings(settings)
         updateText(settings)
 
         thread.setSettings(settings)
     }
 
-    private fun updateSettings(settings: ColoredShapePipelineSettings) {
+    private fun updateSettings(settings: ReflectivePipelineSettings) {
         settings.hsvHue = IntegerCouple(hueMin.progress, hueMax.progress)
         settings.hsvSaturation = IntegerCouple(satMin.progress, satMax.progress)
         settings.hsvValue = IntegerCouple(valueMin.progress, valueMax.progress)
-        settings.accuracyPercentage = accuracy.progress.toDouble()
+//        settings.accuracyPercentage = accuracy.progress.toDouble()
 
         // hue
 //        if (settings.hsvHue.first > settings.hsvHue.second) {
@@ -112,8 +113,8 @@ class HSVListener(private var mainActivity: MainActivity) : OnSeekBarChangeListe
         }
     }
 
-    private fun updateText(settings: ColoredShapePipelineSettings) {
-        accuracyText.text = "Accuracy: ${settings.accuracyPercentage}"
+    private fun updateText(settings: ReflectivePipelineSettings) {
+//        accuracyText.text = "Accuracy: ${settings.accuracyPercentage}"
         hueMinText.text = "Hue Min: " + settings.hsvHue.first
         hueMaxText.text = "Hue Max: " + settings.hsvHue.second
         satMinText.text = "Sat Min: " + settings.hsvSaturation.first

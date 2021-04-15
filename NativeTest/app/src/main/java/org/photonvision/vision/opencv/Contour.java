@@ -26,7 +26,7 @@ import org.photonvision.vision.Releasable;
 
 import java.util.Comparator;
 
-public class Contour implements Releasable {
+public class Contour implements Releasable, AutoCloseable {
 
     public static final Comparator<Contour> SortByMomentsX =
             Comparator.comparingDouble(
@@ -223,5 +223,10 @@ public class Contour implements Releasable {
         MatOfPoint2f hull = new MatOfPoint2f();
         hull.fromArray(arrPoints);
         return hull;
+    }
+
+    @Override
+    public void close() throws Exception {
+        release();
     }
 }
