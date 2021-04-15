@@ -15,7 +15,6 @@ import org.photonvision.vision.frame.Frame;
 import org.photonvision.vision.frame.FrameDivisor;
 import org.photonvision.vision.frame.FrameStaticProperties;
 import org.photonvision.vision.opencv.CVMat;
-import org.photonvision.vision.opencv.ContourShape;
 import org.photonvision.vision.pipe.impl.Draw2dCrosshairPipe;
 import org.photonvision.vision.pipe.impl.Draw2dTargetsPipe;
 import org.photonvision.vision.pipe.impl.OutputMatPipe;
@@ -45,6 +44,8 @@ public class VisionProcessThread implements Runnable {
 
     public final PoseEstimator estimator = new PoseEstimator();
     public double ax, ay, omega;
+    private List<TrackedTarget> result;
+    private Lock resultLock = new ReentrantLock();
 
     public VisionProcessThread(CameraParameters cp) {
         cameraParameters = cp;
@@ -57,7 +58,7 @@ public class VisionProcessThread implements Runnable {
 //        mDetector.setThresholdMethod(MarkerDetector.thresSuppMethod.CANNY);
 
         // Some sane defaults
-        coloredShapePipe.getSettings().accuracyPercentage = 20;
+        setParams();
     }
 
     public void setInput(Mat frame) {
@@ -79,6 +80,7 @@ public class VisionProcessThread implements Runnable {
         output.copyTo(frame);
         outmatlock.unlock();
     }
+
     public void getColorOutput(Mat frame) {
         if (colorOutput.empty()) {
             inmatlock.lock();
@@ -108,7 +110,6 @@ public class VisionProcessThread implements Runnable {
             estimator.predict(now, omega);
 
             // These internally mutate mRgba
-            setParams();
             detectMarkers();
             detectShapes();
             drawMarkers();
@@ -118,15 +119,15 @@ public class VisionProcessThread implements Runnable {
             mRgba.release();
             outmatlock.unlock();
 
-//            try {
-//                Thread.sleep(0);
-//            } catch (InterruptedException e) {
-//                e.printStackTrace();
-//            }
+            try {
+                Thread.sleep(200);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
     }
 
-    ColoredShapePipeline coloredShapePipe = new ColoredShapePipeline();
+    ColoredShapePipeline visionPipeline = new ColoredShapePipeline();
     FrameStaticProperties props;
 
     private final Draw2dTargetsPipe draw2dTargetsPipe = new Draw2dTargetsPipe();
@@ -135,11 +136,10 @@ public class VisionProcessThread implements Runnable {
     private final OutputMatPipe outputMatPipe = new OutputMatPipe();
 
     private void setParams() {
-        coloredShapePipe.getSettings().contourShape = ContourShape.Triangle;
-        coloredShapePipe.getSettings().outputShowMultipleTargets = true;
-        coloredShapePipe.getSettings().streamingFrameDivisor = FrameDivisor.NONE;
+        visionPipeline.getSettings().outputShowMultipleTargets = true;
+        visionPipeline.getSettings().streamingFrameDivisor = FrameDivisor.NONE;
 
-        ColoredShapePipelineSettings settings = coloredShapePipe.getSettings();
+        ColoredShapePipelineSettings settings = visionPipeline.getSettings();
 
         props = new FrameStaticProperties(mRgba.width(), mRgba.height(), 90, Rotation2d.fromDegrees(0), null);
         resizeImagePipe.setParams(new ResizeImagePipe.ResizeImageParams(settings.streamingFrameDivisor));
@@ -160,7 +160,7 @@ public class VisionProcessThread implements Runnable {
 //        if (true) return;
 
         Frame f = new Frame(new CVMat(mRgba), props);
-        CVPipelineResult result = coloredShapePipe.run(f);
+        CVPipelineResult result = visionPipeline.run(f);
 
         Mat inMat = result.inputFrame.image.getMat();
         Mat outMat = result.outputFrame.image.getMat();
@@ -181,6 +181,13 @@ public class VisionProcessThread implements Runnable {
 
         Imgproc.cvtColor(mRgba, mRgba, Imgproc.COLOR_BGR2RGBA);
         Imgproc.cvtColor(colorOutput, colorOutput, Imgproc.COLOR_BGR2RGB);
+
+        resultLock.lock();
+        if (this.result != null)
+            this.result.forEach(TrackedTarget::release);
+        this.result = null;
+        this.result = result.targets;
+        resultLock.unlock();
 
         inmatlock.unlock();
         outmatlock.unlock();
@@ -225,11 +232,19 @@ public class VisionProcessThread implements Runnable {
         }
     }
 
-    public ColoredShapePipelineSettings getColoredShapeSettings() {
-        return coloredShapePipe.getSettings();
+    public ColoredShapePipelineSettings getPipelineSettings() {
+        return visionPipeline.getSettings();
     }
 
     public void setSettings(ColoredShapePipelineSettings settings) {
-        coloredShapePipe.setSettings(settings);
+        visionPipeline.setSettings(settings);
+    }
+
+    public boolean hasTargets() {
+        resultLock.lock();
+        List<TrackedTarget> targets = this.result;
+        boolean hasTargets = !targets.isEmpty();
+        resultLock.unlock();
+        return hasTargets;
     }
 }

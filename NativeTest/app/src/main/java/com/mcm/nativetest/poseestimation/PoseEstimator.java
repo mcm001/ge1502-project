@@ -28,6 +28,7 @@ public class PoseEstimator {
 //    public KalmanFilter<N1, N1, N1> headingFilter = new KalmanFilter<>(Nat.N1(),
 //            Nat.N1(), new LinearSystem<>(VecBuilder.fill(0), VecBuilder.fill(1), VecBuilder.fill(1), VecBuilder.fill(0)),
 //            VecBuilder.fill(0.1), VecBuilder.fill(0.5), 0.05);
+
     UnscentedKalmanFilter<N1, N1, N1> headingFilter =
             new UnscentedKalmanFilter<>(
                     Nat.N1(),

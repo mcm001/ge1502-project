@@ -32,10 +32,7 @@ import com.android.volley.toolbox.Volley
 import edu.wpi.first.wpilibj.geometry.Pose2d
 import edu.wpi.first.wpilibj.util.Units
 import kotlinx.android.synthetic.main.activity_main.*
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.yield
+import kotlinx.coroutines.*
 import org.opencv.android.*
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewFrame
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener2
@@ -233,8 +230,36 @@ class MainActivity : AppCompatActivity(), CvCameraViewListener2, SensorEventList
                     when {
                         line.contains("/driveForward", true) -> {
                             println("DRIVING FORWARD")
-//                            controller.currentState = Controller.State.Power(0.8, 0.0)
-                            controller.turnToFace(Pose2d())
+//                            controller.currentState = Controller.State.Power(1.0, 1.0)
+                            GlobalScope.launch {
+                                controller.turnToFace(Pose2d())
+                                while(!controller.currentState.isDone()) {
+                                    delay(10)
+                                }
+                                controller.currentState = Controller.State.Distance(1.0)
+                                while(!controller.currentState.isDone()) {
+                                    delay(10)
+                                }
+
+                                // Wait for a target to show up
+                                // I'm really lazy so all this does is wait to see if
+                                // the pipeline sees a triangle
+                                // If it has been long enough, the robot plays a sound
+                                // and just keeps driving
+                                var targetCount = 0
+                                for(i in 0..100) {
+                                    delay(100)
+                                    if(visionProcess?.hasTargets() == true) targetCount++
+                                    if(targetCount > 4) break
+                                }
+                                if(targetCount > 4) {
+                                    // Yell at people. for now, we just print
+                                    println("Found bad thing")
+                                } else {
+                                    // Don't yell at them
+                                    println("Understandable")
+                                }
+                            }
                         }
                         line.contains("/stop", true) -> {
                             println("STOPPING")

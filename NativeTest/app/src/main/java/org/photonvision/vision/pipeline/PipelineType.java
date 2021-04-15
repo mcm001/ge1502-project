@@ -19,7 +19,8 @@ package org.photonvision.vision.pipeline;
 
 @SuppressWarnings("rawtypes")
 public enum PipelineType {
-    ColoredShape(0, ColoredShapePipeline.class);
+    ColoredShape(0, ColoredShapePipeline.class),
+    Reflective(1, ReflectivePipeline.class);
 
     public final int baseIndex;
     public final Class clazz;

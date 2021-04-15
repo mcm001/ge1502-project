@@ -13,6 +13,10 @@ import kotlin.math.sign
 class Controller(val setSpeeds: (DifferentialDriveWheelSpeeds) -> Unit, val poseSupplier: () -> Pose2d?) {
 
     var currentState: State = State.Nothing
+        set(value) {
+            field = value
+            field.initialize()
+        }
 
     suspend fun update() {
         val pose = poseSupplier() ?: return
@@ -21,19 +25,25 @@ class Controller(val setSpeeds: (DifferentialDriveWheelSpeeds) -> Unit, val pose
         delay(50)
     }
 
-    fun turnToFace(pose2d: Pose2d) {
+    fun turnToFace(pose2d: Pose2d): State {
         currentState = State.Angle(pose2d, poseSupplier)
+        return currentState
     }
 
     sealed class State {
         abstract fun iterate(pose: Pose2d): DifferentialDriveWheelSpeeds
         open fun isDone() = false
+        open fun initialize() {}
 
         class Angle(private val targetPose: Pose2d, private val poseSupplier: () -> Pose2d?) : State() {
-            private val pid = PIDController(0.3, 0.05, 0.0)
+            private val pid = PIDController(0.3, 0.0, 0.0)
                 .apply {
                     enableContinuousInput(0.0, 360.0)
                 }
+
+            override fun initialize() {
+                pid.reset()
+            }
 
             override fun iterate(pose: Pose2d): DifferentialDriveWheelSpeeds {
                 val currentPose = poseSupplier() ?: return DifferentialDriveWheelSpeeds()
@@ -43,6 +53,7 @@ class Controller(val setSpeeds: (DifferentialDriveWheelSpeeds) -> Unit, val pose
 
                 var power = pid.calculate(pose.rotation.degrees, yaw.degrees)
                 power += 0.2 * sign(power) // Static friction
+                println(power)
 
                 return DifferentialDriveWheelSpeeds(-power, power)
             }
@@ -50,12 +61,17 @@ class Controller(val setSpeeds: (DifferentialDriveWheelSpeeds) -> Unit, val pose
             override fun isDone() = pid.positionError.absoluteValue < 1
         }
 
-        class Distance(val duration: Double) : State() {
+        class Distance(distInches: Double) : State() {
+            // hacky distance -> speed conversion
+            private val timePerInch = 0.5
+
             var firstRun = true
             private var startTime: Long = -1
+            private val duration = distInches * timePerInch
+
             override fun iterate(pose: Pose2d): DifferentialDriveWheelSpeeds {
                 if(firstRun) startTime = System.currentTimeMillis()
-                return DifferentialDriveWheelSpeeds(1.0, 1.0)
+                return DifferentialDriveWheelSpeeds(0.6, 0.5)
             }
 
             override fun isDone(): Boolean {
@@ -72,6 +88,7 @@ class Controller(val setSpeeds: (DifferentialDriveWheelSpeeds) -> Unit, val pose
                 return DifferentialDriveWheelSpeeds()
             }
         }
+
     }
 }
 

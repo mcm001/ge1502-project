@@ -6,6 +6,7 @@ import android.widget.TextView
 import org.photonvision.common.util.numbers.DoubleCouple
 import org.photonvision.common.util.numbers.IntegerCouple
 import org.photonvision.common.util.numbers.NumberCouple
+import org.photonvision.vision.opencv.ContourShape
 import org.photonvision.vision.pipeline.ColoredShapePipelineSettings
 
 class HSVListener(private var mainActivity: MainActivity) : OnSeekBarChangeListener {
@@ -42,12 +43,15 @@ class HSVListener(private var mainActivity: MainActivity) : OnSeekBarChangeListe
     fun init() {
         // Set initial settings
         val thread = mainActivity.visionProcess
-        val settings = thread?.coloredShapeSettings
+        val settings = thread?.pipelineSettings
         if (settings != null) {
             settings.accuracyPercentage = 75.0
-            settings.hsvHue = IntegerCouple(0, 50)
-            settings.hsvSaturation = IntegerCouple(120, 255)
-            settings.hsvValue = IntegerCouple(50, 255)
+            settings.circleAccuracy = 12
+            settings.hsvHue = IntegerCouple(0, 180)
+            settings.hsvSaturation = IntegerCouple(159, 255)
+            settings.hsvValue = IntegerCouple(199, 255)
+            settings.contourArea = DoubleCouple(1.0 / 100.0, 100)
+            settings.contourShape = ContourShape.Circle
 
             setCouple(hueMin, hueMax, settings.hsvHue)
             setCouple(satMin, satMax, settings.hsvSaturation)
@@ -67,7 +71,7 @@ class HSVListener(private var mainActivity: MainActivity) : OnSeekBarChangeListe
         val thread: VisionProcessThread = mainActivity.visionProcess ?: return
         if (!fromUser) return
 
-        val settings = thread.coloredShapeSettings
+        val settings = thread.pipelineSettings
         updateSettings(settings)
         updateText(settings)
 
@@ -81,13 +85,13 @@ class HSVListener(private var mainActivity: MainActivity) : OnSeekBarChangeListe
         settings.accuracyPercentage = accuracy.progress.toDouble()
 
         // hue
-        if (settings.hsvHue.first > settings.hsvHue.second) {
-            val lower = settings.hsvHue.second
-            val upper = settings.hsvHue.first
-            settings.hsvHue = IntegerCouple(lower, upper)
-            hueMin.progress = lower
-            hueMax.progress = upper
-        }
+//        if (settings.hsvHue.first > settings.hsvHue.second) {
+//            val lower = settings.hsvHue.second
+//            val upper = settings.hsvHue.first
+//            settings.hsvHue = IntegerCouple(lower, upper)
+//            hueMin.progress = lower
+//            hueMax.progress = upper
+//        }
 
         // sat
         if (settings.hsvSaturation.first > settings.hsvSaturation.second) {
