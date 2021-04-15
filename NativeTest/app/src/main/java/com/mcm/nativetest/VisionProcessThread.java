@@ -183,8 +183,8 @@ public class VisionProcessThread implements Runnable {
         Imgproc.cvtColor(colorOutput, colorOutput, Imgproc.COLOR_BGR2RGB);
 
         resultLock.lock();
-        if (this.result != null)
-            this.result.forEach(TrackedTarget::release);
+//        if (this.result != null)
+//            this.result.forEach(TrackedTarget::release);
         this.result = null;
         this.result = result.targets;
         resultLock.unlock();

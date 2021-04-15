@@ -47,9 +47,9 @@ class HSVListener(private var mainActivity: MainActivity) : OnSeekBarChangeListe
         if (settings != null) {
             settings.accuracyPercentage = 75.0
             settings.circleAccuracy = 12
-            settings.hsvHue = IntegerCouple(0, 180)
-            settings.hsvSaturation = IntegerCouple(159, 255)
-            settings.hsvValue = IntegerCouple(199, 255)
+            settings.hsvHue = IntegerCouple(64, 170)
+            settings.hsvSaturation = IntegerCouple(199, 255)
+            settings.hsvValue = IntegerCouple(179, 255)
             settings.contourArea = DoubleCouple(1.0 / 100.0, 100)
             settings.contourShape = ContourShape.Circle
 
