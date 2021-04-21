@@ -237,63 +237,64 @@ class MainActivity : AppCompatActivity(), CvCameraViewListener2, SensorEventList
                         line.contains("/driveForward", true) -> {
                             println("DRIVING FORWARD")
 //                            controller.currentState = Controller.State.Power(1.0, 1.0)
-                            GlobalScope.launch {
-                                controller.turnToFace(Pose2d())
-                                while (!controller.currentState.isDone() && controller.currentState != Controller.State.Nothing) {
-                                    delay(10)
-                                }
-                                controller.currentState = Controller.State.Power(0.5, 0.5)
-                                delay(1000)
-                                controller.currentState = Controller.State.Nothing
-
-//                                while(!controller.currentState.isDone() && controller.currentState != Controller.State.Nothing) {
-//                                    delay(10)
+//                            GlobalScope.launch {
+////                                controller.turnToFace(Pose2d())
+////                                while (!controller.currentState.isDone() && controller.currentState != Controller.State.Nothing) {
+////                                    delay(10)
+////                                }
+                                controller.currentState = Controller.State.Power(1.0, 0.8)
+//                            controller.currentState = Controller.State.Power(-1.0, 1.0)
+////                                delay(1000)
+////                                controller.currentState = Controller.State.Nothing
+//
+////                                while(!controller.currentState.isDone() && controller.currentState != Controller.State.Nothing) {
+////                                    delay(10)
+////                                }
+//
+//                                // Wait for a target to show up
+//                                // I'm really lazy so all this does is wait to see if
+//                                // the pipeline sees a triangle
+//                                // If it has been long enough, the robot plays a sound
+//                                // and just keeps driving
+//                                var targetCount = 0
+//                                var i = 0
+//
+//                                runOnUiThread {
+//                                    Toast.makeText(this@MainActivity, "Looking for items", 3)
 //                                }
-
-                                // Wait for a target to show up
-                                // I'm really lazy so all this does is wait to see if
-                                // the pipeline sees a triangle
-                                // If it has been long enough, the robot plays a sound
-                                // and just keeps driving
-                                var targetCount = 0
-                                var i = 0
-
-                                runOnUiThread {
-                                    Toast.makeText(this@MainActivity, "Looking for items", 3)
-                                }
-
-                                while (++i in 0..100 && targetCount <= 4) {
-                                    delay(50)
-                                    println("hi")
-                                    if (visionProcess?.hasTargets() == true) targetCount++
-                                    else if (targetCount > 0) targetCount--
-                                    println(targetCount)
-//                                    if(targetCount > 4) break
-                                }
-                                if (targetCount > 4) {
-                                    // Yell at people. for now, we just print
-                                    println("Found bad thing")
-                                    alarmPlayer =
-                                        MediaPlayer.create(this@MainActivity, Settings.System.DEFAULT_ALARM_ALERT_URI)
-                                    runOnUiThread {
-                                        Toast.makeText(this@MainActivity, "Illegal item!", 5)
-                                    }
-                                    alarmPlayer.start()
-                                    delay(3000)
-                                    alarmPlayer.stop()
-                                } else {
-                                    // Don't yell at them
-                                    println("Understandable")
-                                    alarmPlayer =
-                                        MediaPlayer.create(this@MainActivity, Settings.System.DEFAULT_NOTIFICATION_URI)
-                                    runOnUiThread {
-                                        Toast.makeText(this@MainActivity, "Carry on!", 5)
-                                    }
-                                    alarmPlayer.start()
-                                    delay(3000)
-                                    alarmPlayer.stop()
-                                }
-                            }
+//
+//                                while (++i in 0..1000 && targetCount <= 4) {
+//                                    delay(20)
+//                                    println("hi")
+//                                    if (visionProcess?.hasTargets() == true) targetCount++
+//                                    else if (targetCount > 0) targetCount--
+//                                    println(targetCount)
+////                                    if(targetCount > 4) break
+//                                }
+//                                if (targetCount > 4) {
+//                                    // Yell at people. for now, we just print
+//                                    println("Found bad thing")
+//                                    alarmPlayer =
+//                                        MediaPlayer.create(this@MainActivity, Settings.System.DEFAULT_ALARM_ALERT_URI)
+//                                    runOnUiThread {
+//                                        Toast.makeText(this@MainActivity, "Illegal item!", 5)
+//                                    }
+//                                    alarmPlayer.start()
+//                                    delay(3000)
+//                                    alarmPlayer.stop()
+//                                } else {
+//                                    // Don't yell at them
+//                                    println("Understandable")
+//                                    alarmPlayer =
+//                                        MediaPlayer.create(this@MainActivity, Settings.System.DEFAULT_NOTIFICATION_URI)
+//                                    runOnUiThread {
+//                                        Toast.makeText(this@MainActivity, "Carry on!", 5)
+//                                    }
+//                                    alarmPlayer.start()
+//                                    delay(3000)
+//                                    alarmPlayer.stop()
+//                                }
+//                            }
                         }
                         line.contains("/stop", true) -> {
                             println("STOPPING")
@@ -389,7 +390,7 @@ class MainActivity : AppCompatActivity(), CvCameraViewListener2, SensorEventList
                 processThread = null
             }
             processThread = Thread { while (!Thread.currentThread().isInterrupted) visionProcess?.run() }
-            processThread!!.start()
+//            processThread!!.start()
             hsvListener.init()
         }
         sensorManager!!.registerListener(this, gyro, SensorManager.SENSOR_DELAY_GAME)
